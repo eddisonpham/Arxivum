@@ -2,12 +2,11 @@
   <img src="assets/arxivum.png" alt="arxivum" width="640" style="border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
 </p>
 
-<h1 align="center">arxivum</h1>
+<h1 align="center">ArXivum: Local-first MCP research library for coding agents</h1>
 
 <p align="center">
-  A <strong>local-first</strong> Model Context Protocol (MCP) server that lets coding agents
-  discover, summarise, organise, and ideate over arXiv research papers
-  entirely on your own machine.
+  Discover, summarise, organise, and ideate over arXiv research papers
+  entirely on your own machine. No cloud LLM calls. No data leaves your machine.
 </p>
 
 <p align="center">
