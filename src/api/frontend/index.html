@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Library — Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+      </svg>
+      <span>Research Library</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="active">Library</a>
+      <a href="/activity">Activity</a>
+      <a href="/demo">Demo</a>
+      <a href="/docs">API</a>
+    </div>
+    <div id="model-indicator" class="model-indicator" title="Model loading state">
+      <span class="dot dot-idle"></span>
+      <span class="model-text">Idle</span>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Search section -->
+    <section class="card search-section">
+      <h2>Search arXiv</h2>
+      <div class="search-row">
+        <input type="text" id="search-query" placeholder="e.g. graph neural networks for drug discovery" class="input-grow">
+        <select id="search-category">
+          <option value="">All categories</option>
+          <option value="cs.LG">cs.LG</option>
+          <option value="cs.CL">cs.CL</option>
+          <option value="cs.AI">cs.AI</option>
+          <option value="cs.CV">cs.CV</option>
+          <option value="stat.ML">stat.ML</option>
+          <option value="physics">physics</option>
+        </select>
+        <input type="number" id="search-max" value="10" min="1" max="50" class="input-sm" title="Max results">
+        <label class="checkbox-label"><input type="checkbox" id="search-enrich"> Enrich</label>
+        <button id="search-btn" class="btn btn-primary">Search & Import</button>
+      </div>
+      <div id="search-status" class="status-msg"></div>
+    </section>
+
+    <!-- Local query section -->
+    <section class="card query-section">
+      <h2>Query Local Library</h2>
+      <div class="search-row">
+        <input type="text" id="query-text" placeholder="Ask a question about papers in your library…" class="input-grow">
+        <input type="number" id="query-topk" value="5" min="1" max="50" class="input-sm" title="Top K">
+        <input type="number" id="query-mincit" value="0" min="0" class="input-sm" title="Min citations">
+        <label class="checkbox-label"><input type="checkbox" id="query-rerank" checked> Rerank</label>
+        <button id="query-btn" class="btn btn-secondary">Query</button>
+      </div>
+    </section>
+
+    <!-- Results / Library table -->
+    <section class="card">
+      <div class="table-header">
+        <h2 id="table-title">Library <span id="paper-count" class="badge"></span></h2>
+        <div class="table-controls">
+          <select id="sort-by">
+            <option value="created_at">Recently added</option>
+            <option value="citation_count">Citations</option>
+            <option value="published">Published date</option>
+          </select>
+          <button id="refresh-btn" class="btn btn-ghost">Refresh</button>
+        </div>
+      </div>
+      <div id="results-container" class="results-container">
+        <table id="results-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Authors</th><th>Category</th><th>Citations</th><th>Venue</th><th>Date</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty-state">
+          <p>No papers in the library yet. Search arXiv above to get started.</p>
+        </div>
+        <div id="loading-state" class="loading-state" style="display:none;">
+          <div class="spinner"></div><p>Loading…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
