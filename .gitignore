@@ -1,6 +1,9 @@
 # Agent planning context (private)
 Agent Context/*
 
+# Knowledge transfer docs (private)
+docs/
+
 # Secrets / env
 .env
 env
