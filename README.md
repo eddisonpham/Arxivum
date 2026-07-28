@@ -23,10 +23,12 @@ over arXiv research papers — entirely on your own machine.
 git clone <repo>
 cd arxivum
 
-# 2. Create venv & install
+# 2. Create venv & install (add [llm] for local LLM inference)
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+pip install -e ".[dev,llm]"
+# Note: [llm] installs llama-cpp-python (needs CMake + C++ compiler).
+# Without [llm], everything works except local LLM generation.
 
 # 3. Configure
 cp .env.example .env               # add your HF_TOKEN (for model download only)

@@ -48,7 +48,15 @@ class LocalLLM:
                 )
             logger.info("Loading LLM: %s (ctx=%d, threads=%d, gpu_layers=%d)",
                         self._model_path, self._n_ctx, self._n_threads, self._n_gpu_layers)
-            from llama_cpp import Llama
+            try:
+                from llama_cpp import Llama
+            except ImportError:
+                raise ImportError(
+                    "llama-cpp-python is not installed. Install it with:\n"
+                    '  pip install -e ".[llm]"\n'
+                    "On Windows you may need CMake + a C++ compiler.\n"
+                    "See README.md for details."
+                ) from None
 
             self._llm = Llama(
                 model_path=str(path),
