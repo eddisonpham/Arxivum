@@ -426,8 +426,10 @@ async def enrich_paper(arxiv_id: str) -> JSONResponse:
 # ── Static frontend (visual panel + demo) ────────────────────────────────────
 
 if _FRONTEND_DIR.exists():
-    app.mount("/demo", StaticFiles(directory=str(_FRONTEND_DIR / "demo"), html=True),
-              name="demo")
+    _demo_dir = _FRONTEND_DIR / "demo"
+    if _demo_dir.exists():
+        app.mount("/demo", StaticFiles(directory=str(_demo_dir), html=True),
+                  name="demo")
     app.mount("/", StaticFiles(directory=str(_FRONTEND_DIR), html=True),
               name="frontend")
 

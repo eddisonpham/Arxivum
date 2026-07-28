@@ -177,10 +177,17 @@ def extract_json(raw: str) -> Any:
         pass
 
     # Try to find the first balanced JSON object or array.
-    for opener, closer in (("{", "}"), ("[", "]")):
-        start = text.find(opener)
-        if start == -1:
-            continue
+    # Pick whichever opener ({ or [) appears first in the text.
+    brace_start = text.find("{")
+    bracket_start = text.find("[")
+    candidates: list[tuple[int, str, str]] = []
+    if brace_start != -1:
+        candidates.append((brace_start, "{", "}"))
+    if bracket_start != -1:
+        candidates.append((bracket_start, "[", "]"))
+    candidates.sort(key=lambda c: c[0])
+
+    for start, opener, closer in candidates:
         depth = 0
         in_string = False
         escape = False

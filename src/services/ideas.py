@@ -86,6 +86,8 @@ class IdeaService:
             parsed = extract_json(raw)
             if not isinstance(parsed, list):
                 parsed = [parsed] if isinstance(parsed, dict) else []
+            # Truncate to the requested number of ideas.
+            parsed = parsed[:num_ideas]
 
             model_name = getattr(self.models.llm, "model_path", "stub")
             ideas: list[dict] = []
