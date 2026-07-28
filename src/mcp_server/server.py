@@ -1,6 +1,6 @@
 """MCP server — exposes research tools to coding agents.
 
-Uses the official ``mcp`` Python SDK's high-level ``FastMCP`` API.
+Uses the official ``mcp`` Python SDK's high-level ``MCPServer`` API.
 All tools are prefixed with ``research_`` to avoid collisions.
 
 Run via::
@@ -24,14 +24,14 @@ logger = logging.getLogger(__name__)
 TOOL_PREFIX = "research_"
 
 def create_mcp_server(ctx: AppContext):
-    """Create a FastMCP server with all research tools registered.
+    """Create an MCP server with all research tools registered.
 
-    Returns the ``FastMCP`` instance.  The caller runs it via
+    Returns the ``MCPServer`` instance.  The caller runs it via
     ``mcp.run(transport=...)``.
     """
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server import MCPServer
 
-    mcp = FastMCP("research-library")
+    mcp = MCPServer("research-library")
     lib = ctx.library
     summarizer = ctx.summarizer
     ideas_svc = ctx.ideas
