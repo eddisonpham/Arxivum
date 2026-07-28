@@ -27,15 +27,12 @@ from src.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# ── Pydantic request models ──────────────────────────────────────────────────
-
 class SearchRequest(BaseModel):
     query: str
     max_results: int = Field(default=10, ge=1, le=50)
     primary_category: str = ""
     auto_enrich: bool = False
     summarize: bool = False
-
 
 class QueryRequest(BaseModel):
     query: str
@@ -45,37 +42,26 @@ class QueryRequest(BaseModel):
     primary_category: str = ""
     rerank: bool = True
 
-
 class SummaryRequest(BaseModel):
     sections: list[str] | None = None
     force: bool = False
-
 
 class IdeaRequest(BaseModel):
     num_ideas: int = Field(default=3, ge=1, le=5)
     focus_area: str = "methodological"
 
-
 class IdeaStatusRequest(BaseModel):
     status: str = Field(pattern="^(pending|approved|rejected)$")
-
 
 class NoveltyRequest(BaseModel):
     search_query: str = ""
 
-
-# ── Global app context (set in lifespan) ─────────────────────────────────────
-
 _ctx: AppContext | None = None
-
 
 def get_ctx() -> AppContext:
     if _ctx is None:
         raise RuntimeError("App context not initialised")
     return _ctx
-
-
-# ── WebSocket connection manager ─────────────────────────────────────────────
 
 class ActivityBroadcaster:
     """Manages WebSocket connections and broadcasts activity updates."""
@@ -101,9 +87,7 @@ class ActivityBroadcaster:
         for ws in dead:
             self.disconnect(ws)
 
-
 broadcaster = ActivityBroadcaster()
-
 
 async def _activity_poller() -> None:
     """Background task that polls the activity log and broadcasts new entries."""
@@ -128,9 +112,6 @@ async def _activity_poller() -> None:
             logger.debug("Activity poller error", exc_info=True)
         await asyncio.sleep(2.0)
 
-
-# ── Lifespan ─────────────────────────────────────────────────────────────────
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _ctx
@@ -151,16 +132,12 @@ async def lifespan(app: FastAPI):
         shutdown_app(_ctx)
         _ctx = None
 
-
 app = FastAPI(
     title="Research Library MCP",
     description="Local-first arXiv research library for coding agents.",
     version="0.1.0",
     lifespan=lifespan,
 )
-
-
-# ── REST endpoints ───────────────────────────────────────────────────────────
 
 @app.get("/api/v1/health")
 async def health() -> dict:
@@ -172,7 +149,6 @@ async def health() -> dict:
         "chroma_chunks": ctx.chroma.count(),
         "model_state": ctx.models.model_state,
     }
-
 
 @app.get("/api/v1/library")
 async def list_library(
@@ -192,7 +168,6 @@ async def list_library(
         venue=venue or None,
     )
 
-
 @app.get("/api/v1/library/{arxiv_id}")
 async def get_paper(arxiv_id: str) -> JSONResponse:
     """Get full metadata, metrics, summaries, and ideas for a paper."""
@@ -204,7 +179,6 @@ async def get_paper(arxiv_id: str) -> JSONResponse:
             content={"error": "not_found", "message": f"Paper {arxiv_id} not in library."},
         )
     return detail
-
 
 @app.post("/api/v1/library/search")
 async def search_papers(req: SearchRequest) -> dict:
@@ -229,7 +203,6 @@ async def search_papers(req: SearchRequest) -> dict:
                 logger.warning("Summary failed for %s: %s", r.arxiv_id, exc)
     return out
 
-
 @app.post("/api/v1/library/query")
 async def query_library(req: QueryRequest) -> dict:
     """Vector + metadata search over the local library."""
@@ -245,14 +218,12 @@ async def query_library(req: QueryRequest) -> dict:
     )
     return {"results": [r.to_dict() for r in results]}
 
-
 @app.delete("/api/v1/library/{arxiv_id}")
 async def remove_paper(arxiv_id: str) -> dict:
     """Remove a paper and all derived data from the library."""
     ctx = get_ctx()
     removed = await asyncio.to_thread(ctx.library.remove_paper, arxiv_id)
     return {"removed": removed, "arxiv_id": arxiv_id}
-
 
 @app.post("/api/v1/summaries/{arxiv_id}")
 async def generate_summary(arxiv_id: str, req: SummaryRequest) -> JSONResponse:
@@ -272,13 +243,11 @@ async def generate_summary(arxiv_id: str, req: SummaryRequest) -> JSONResponse:
             content={"error": "not_found", "message": str(exc)},
         )
 
-
 @app.get("/api/v1/summaries/{arxiv_id}")
 async def get_summaries(arxiv_id: str) -> dict:
     """Get all cached summaries for a paper (no LLM call)."""
     ctx = get_ctx()
     return {"arxiv_id": arxiv_id, "summaries": ctx.summarizer.get_cached(arxiv_id)}
-
 
 @app.post("/api/v1/ideas/{arxiv_id}")
 async def generate_ideas(arxiv_id: str, req: IdeaRequest) -> JSONResponse:
@@ -298,13 +267,11 @@ async def generate_ideas(arxiv_id: str, req: IdeaRequest) -> JSONResponse:
             content={"error": "not_found", "message": str(exc)},
         )
 
-
 @app.get("/api/v1/ideas/{arxiv_id}")
 async def list_ideas(arxiv_id: str) -> dict:
     """List all ideas for a paper."""
     ctx = get_ctx()
     return {"arxiv_id": arxiv_id, "ideas": ctx.ideas.list_ideas(arxiv_id)}
-
 
 @app.post("/api/v1/ideas/{idea_id}/status")
 async def update_idea_status(idea_id: int, req: IdeaStatusRequest) -> JSONResponse:
@@ -317,7 +284,6 @@ async def update_idea_status(idea_id: int, req: IdeaStatusRequest) -> JSONRespon
             content={"error": "not_found", "message": f"Idea {idea_id} not found."},
         )
     return {"idea_id": idea_id, "status": req.status}
-
 
 @app.post("/api/v1/novelty/{idea_id}")
 async def verify_novelty(idea_id: int, req: NoveltyRequest) -> JSONResponse:
@@ -335,7 +301,6 @@ async def verify_novelty(idea_id: int, req: NoveltyRequest) -> JSONResponse:
             status_code=404,
             content={"error": "not_found", "message": str(exc)},
         )
-
 
 @app.get("/api/v1/activity")
 async def get_activity(limit: int = 50, action_type: str = "") -> dict:
@@ -357,25 +322,17 @@ async def get_activity(limit: int = 50, action_type: str = "") -> dict:
         ]
     }
 
-
-# ── WebSocket ────────────────────────────────────────────────────────────────
-
 @app.websocket("/ws/activity")
 async def ws_activity(ws: WebSocket) -> None:
     """WebSocket endpoint that streams activity log updates in real-time."""
     await broadcaster.connect(ws)
     try:
         while True:
-            # Keep connection alive; client can also send pings.
             await ws.receive_text()
     except WebSocketDisconnect:
         broadcaster.disconnect(ws)
 
-
-# ── HTML page routes (must be before StaticFiles mount) ─────────────────────
-
 _FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
-
 
 @app.get("/paper/{arxiv_id}")
 async def serve_paper_page(arxiv_id: str) -> FileResponse:
@@ -385,7 +342,6 @@ async def serve_paper_page(arxiv_id: str) -> FileResponse:
         return FileResponse(str(page), media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "not_found"})
 
-
 @app.get("/activity")
 async def serve_activity_page() -> FileResponse:
     """Serve the activity log HTML page."""
@@ -393,9 +349,6 @@ async def serve_activity_page() -> FileResponse:
     if page.exists():
         return FileResponse(str(page), media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "not_found"})
-
-
-# ── Enrich endpoint ─────────────────────────────────────────────────────────
 
 @app.post("/api/v1/library/{arxiv_id}/enrich")
 async def enrich_paper(arxiv_id: str) -> JSONResponse:
@@ -422,9 +375,6 @@ async def enrich_paper(arxiv_id: str) -> JSONResponse:
             content={"error": "enrich_failed", "message": str(exc)},
         )
 
-
-# ── Static frontend (visual panel + demo) ────────────────────────────────────
-
 if _FRONTEND_DIR.exists():
     _demo_dir = _FRONTEND_DIR / "demo"
     if _demo_dir.exists():
@@ -432,9 +382,6 @@ if _FRONTEND_DIR.exists():
                   name="demo")
     app.mount("/", StaticFiles(directory=str(_FRONTEND_DIR), html=True),
               name="frontend")
-
-
-# ── Entry point ──────────────────────────────────────────────────────────────
 
 def main() -> int:
     """Entry point for the FastAPI server."""
@@ -448,7 +395,6 @@ def main() -> int:
         reload=False,
     )
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

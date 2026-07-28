@@ -32,10 +32,8 @@ S2_FIELDS = (
 )
 S2_USER_AGENT = "research-library-mcp/0.1 (local research tool)"
 S2_MAX_BATCH = 500
-S2_RATE_LIMIT_SECONDS = 1.0  # be polite; unauthenticated tier
-# Sentinel for "S2 lookup attempted but failed/missing" so ingest isn't blocked.
+S2_RATE_LIMIT_SECONDS = 1.0
 MISSING_CITATION = -1
-
 
 @dataclass
 class S2Metrics:
@@ -56,7 +54,6 @@ class S2Metrics:
             "venue": self.venue,
             "s2_paper_id": self.s2_paper_id,
         }
-
 
 def _parse_paper(arxiv_id: str, data: dict[str, Any] | None) -> S2Metrics:
     """Convert a single S2 paper JSON object into :class:`S2Metrics`.
@@ -81,7 +78,6 @@ def _parse_paper(arxiv_id: str, data: dict[str, Any] | None) -> S2Metrics:
         raw=data,
     )
 
-
 class SemanticScholarClient:
     """Async S2 Graph API client with a batch queue."""
 
@@ -95,13 +91,11 @@ class SemanticScholarClient:
         self._timeout = timeout
         self._max_retries = max_retries
         self._flush_interval = flush_interval
-        # Batch queue state
         self._queue: dict[str, asyncio.Future[S2Metrics]] = {}
         self._queue_lock = asyncio.Lock()
         self._flush_task: asyncio.Task | None = None
         self._last_request: float = 0.0
 
-    # ── httpx lifecycle ────────────────────────────────────────────────
     async def _ensure_client(self) -> httpx.AsyncClient:
         if self._client is None:
             self._client = httpx.AsyncClient(
@@ -118,7 +112,6 @@ class SemanticScholarClient:
             self._flush_task.cancel()
             self._flush_task = None
 
-    # ── low-level request with retry ───────────────────────────────────
     async def _request(
         self, method: str, url: str, **kwargs: Any
     ) -> httpx.Response:
@@ -126,7 +119,6 @@ class SemanticScholarClient:
         backoff = 2.0
         last_exc: Exception | None = None
         for attempt in range(self._max_retries + 1):
-            # Politeness delay.
             now = asyncio.get_event_loop().time()
             wait = S2_RATE_LIMIT_SECONDS - (now - self._last_request)
             if wait > 0 and attempt == 0:
@@ -159,7 +151,6 @@ class SemanticScholarClient:
                 raise
         raise last_exc  # type: ignore[misc]
 
-    # ── single-paper lookup ────────────────────────────────────────────
     async def fetch_paper(self, arxiv_id: str) -> S2Metrics:
         """Fetch metrics for one arXiv ID (``ARXIV:`` prefix added)."""
         url = f"{S2_BASE}/paper/ARXIV:{arxiv_id}"
@@ -175,7 +166,6 @@ class SemanticScholarClient:
             logger.warning("S2: fetch_paper %s failed: %s", arxiv_id, exc)
             return S2Metrics(arxiv_id=arxiv_id)
 
-    # ── explicit batch lookup ──────────────────────────────────────────
     async def fetch_batch(self, arxiv_ids: list[str]) -> dict[str, S2Metrics]:
         """Fetch metrics for up to ``S2_MAX_BATCH`` arXiv IDs at once.
 
@@ -195,13 +185,11 @@ class SemanticScholarClient:
             logger.warning("S2: fetch_batch failed: %s", exc)
             return {aid: S2Metrics(arxiv_id=aid) for aid in ids_chunk}
 
-        # S2 returns a list aligned with input order; entries may be null.
         out: dict[str, S2Metrics] = {}
         for aid, data in zip(ids_chunk, data_list):
             out[aid] = _parse_paper(aid, data)
         return out
 
-    # ── async batch queue ──────────────────────────────────────────────
     async def enqueue(self, arxiv_id: str) -> S2Metrics:
         """Queue an arXiv ID for batch enrichment.
 

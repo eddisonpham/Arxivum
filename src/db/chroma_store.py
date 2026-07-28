@@ -13,12 +13,9 @@ from typing import Any, Sequence
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 
-
-# Chunk-type constants — keep in sync with chunk ID scheme.
 CHUNK_ABSTRACT = "abstract"
 CHUNK_TITLE = "title"
-CHUNK_SUMMARY = "summary"  # prefix; actual: summary_{section}
-
+CHUNK_SUMMARY = "summary"
 
 @dataclass
 class Chunk:
@@ -32,9 +29,8 @@ class Chunk:
     venue: str | None = None
     citation_count: int = -1
     primary_category: str | None = None
-    section: str | None = None  # for summary chunks
+    section: str | None = None
     embedding: list[float] = field(default_factory=list)
-
 
 @dataclass
 class QueryResult:
@@ -51,9 +47,7 @@ class QueryResult:
     primary_category: str | None = None
     section: str | None = None
 
-
 COLLECTION_NAME = "paper_chunks"
-
 
 class ChromaStore:
     """Thin wrapper around a persistent ChromaDB collection."""
@@ -69,7 +63,6 @@ class ChromaStore:
                 path=path, settings=ChromaSettings(anonymized_telemetry=False)
             )
         else:
-            # Ephemeral in-memory client (for tests).
             self._client = chromadb.EphemeralClient(
                 settings=ChromaSettings(anonymized_telemetry=False)
             )
@@ -78,7 +71,6 @@ class ChromaStore:
             metadata={"hnsw:space": "cosine"},
         )
 
-    # ── helpers ────────────────────────────────────────────────────────
     @staticmethod
     def chunk_id(arxiv_id: str, chunk_type: str, section: str | None = None) -> str:
         """Build a deterministic chunk ID.
@@ -106,7 +98,6 @@ class ChromaStore:
             meta["section"] = chunk.section
         return meta
 
-    # ── write ──────────────────────────────────────────────────────────
     def upsert_chunks(self, chunks: Sequence[Chunk]) -> None:
         """Insert or update a batch of pre-embedded chunks."""
         if not chunks:
@@ -122,7 +113,6 @@ class ChromaStore:
     def upsert_chunk(self, chunk: Chunk) -> None:
         self.upsert_chunks([chunk])
 
-    # ── read ───────────────────────────────────────────────────────────
     def query(
         self,
         query_embedding: list[float],
@@ -141,8 +131,6 @@ class ChromaStore:
         metas = res.get("metadatas", [[]])[0]
         dists = res.get("distances", [[]])[0]
         for cid, doc, meta, dist in zip(ids, docs, metas, dists):
-            # Chroma returns cosine *distance* (lower = closer); convert to
-            # a similarity score in [0, 1].
             score = max(0.0, 1.0 - float(dist))
             results.append(
                 QueryResult(
@@ -189,7 +177,6 @@ class ChromaStore:
     def count(self) -> int:
         return self._collection.count()
 
-    # ── delete ─────────────────────────────────────────────────────────
     def delete_by_arxiv_id(self, arxiv_id: str) -> None:
         """Remove all chunks for a paper."""
         self._collection.delete(where={"arxiv_id": arxiv_id})

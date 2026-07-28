@@ -23,9 +23,7 @@ from src.services.prompts import extract_json, novelty_messages
 
 logger = logging.getLogger(__name__)
 
-# Cosine-similarity threshold above which a local paper is "close".
 LOCAL_SIMILARITY_THRESHOLD = 0.85
-
 
 class NoveltyService:
     """Verify the novelty of a generated research idea."""
@@ -80,7 +78,6 @@ class NoveltyService:
             verdict = "likely_novel"
             notes_parts: list[str] = []
 
-            # ── Step 1: Local RAG pre-check ────────────────────────────
             local_matches = self._local_check(idea.idea_text, idea.arxiv_id)
             if local_matches:
                 similar_ids.extend(m["arxiv_id"] for m in local_matches)
@@ -89,10 +86,8 @@ class NoveltyService:
                     f"Local library has {len(local_matches)} similar paper(s)."
                 )
 
-            # ── Step 2: External arXiv search ──────────────────────────
             external_candidates = self._external_check(query_terms, idea.arxiv_id)
             if external_candidates:
-                # ── Step 3: LLM judgment ───────────────────────────────
                 for cand in external_candidates:
                     similar_ids.append(cand["arxiv_id"])
                     llm_verdict = self._llm_judge(
@@ -113,7 +108,6 @@ class NoveltyService:
             if not similar_ids and verdict == "likely_novel":
                 notes_parts.append("No similar work found in local library or arXiv.")
 
-            # Deduplicate similar IDs.
             seen = set()
             unique_similar = []
             for sid in similar_ids:
@@ -142,7 +136,6 @@ class NoveltyService:
             self.db.update_activity_status(log_id, "failed")
             raise
 
-    # ── local RAG pre-check ────────────────────────────────────────────
     def _local_check(
         self, idea_text: str, source_arxiv_id: str
     ) -> list[dict]:
@@ -156,7 +149,6 @@ class NoveltyService:
             return []
         matches: list[dict] = []
         for r in results:
-            # Skip the source paper itself.
             if r.arxiv_id == source_arxiv_id:
                 continue
             if r.score >= LOCAL_SIMILARITY_THRESHOLD:
@@ -167,14 +159,13 @@ class NoveltyService:
                 })
         return matches
 
-    # ── external arXiv check ───────────────────────────────────────────
     def _external_check(
         self, query_terms: list[str], source_arxiv_id: str
     ) -> list[dict]:
         """Search arXiv with the idea's query terms."""
         candidates: list[dict] = []
         seen_ids: set[str] = set()
-        for term in query_terms[:3]:  # cap at 3 queries
+        for term in query_terms[:3]:
             try:
                 papers = self.arxiv.search(
                     query=term, max_results=5, sort_by="relevance",
@@ -195,7 +186,6 @@ class NoveltyService:
                 })
         return candidates
 
-    # ── LLM judgment ───────────────────────────────────────────────────
     def _llm_judge(
         self, idea_text: str, cand_title: str, cand_abstract: str
     ) -> str:

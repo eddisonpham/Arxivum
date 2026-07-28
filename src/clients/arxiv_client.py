@@ -17,16 +17,13 @@ import arxiv
 
 logger = logging.getLogger(__name__)
 
-# arXiv hard rate limit.
 _RATE_LIMIT_SECONDS = 3.0
 
-# Matches arXiv IDs in URLs or bare forms: 2106.00001, arXiv:2106.00001, old-style hep-th/9901001
 _ARXIV_ID_RE = re.compile(
     r"(?:arxiv\.org/abs/|arxiv\.org/pdf/|arXiv:)?"
     r"([0-9]{4}\.[0-9]{4,5}(?:v[0-9]+)?|[a-z\-]+/[0-9]{7}(?:v[0-9]+)?)",
     re.IGNORECASE,
 )
-
 
 def normalize_arxiv_id(raw: str) -> str:
     """Extract and normalise an arXiv ID from a URL or raw string.
@@ -43,11 +40,9 @@ def normalize_arxiv_id(raw: str) -> str:
         raise ValueError(f"Could not extract arXiv ID from: {raw!r}")
     return match.group(1)
 
-
 def strip_version(arxiv_id: str) -> str:
     """Remove the ``vN`` suffix from an arXiv ID."""
     return re.sub(r"v[0-9]+$", "", arxiv_id)
-
 
 @dataclass
 class ArxivPaper:
@@ -57,8 +52,8 @@ class ArxivPaper:
     title: str
     authors: list[str]
     abstract: str
-    published: str | None = None  # ISO date
-    updated: str | None = None  # ISO datetime
+    published: str | None = None
+    updated: str | None = None
     categories: list[str] = field(default_factory=list)
     primary_category: str | None = None
     pdf_url: str | None = None
@@ -107,7 +102,6 @@ class ArxivPaper:
             "comment": self.comment,
         }
 
-
 class ArxivClient:
     """Rate-limited arXiv search client.
 
@@ -149,7 +143,6 @@ class ArxivClient:
         ``sort_by`` is one of ``relevance``, ``last_updated``,
         ``submitted_date``.
         """
-        # Build the arXiv query string, optionally constraining to a category.
         full_query = query
         if primary_category:
             full_query = f"cat:{primary_category} AND ({query})"

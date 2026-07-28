@@ -11,16 +11,14 @@ from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
-# BGE models recommend a query prefix for asymmetric retrieval.
 _QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-
 
 class Embedder:
     """Lazy-loading sentence-transformers embedder."""
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5") -> None:
         self._model_name = model_name
-        self._model = None  # loaded on first use
+        self._model = None
 
     @property
     def is_loaded(self) -> bool:

@@ -20,7 +20,6 @@ from src.inference.reranker import Reranker
 
 logger = logging.getLogger(__name__)
 
-
 class LLMProtocol(Protocol):
     """Minimal protocol any LLM (real or stub) must satisfy."""
 
@@ -36,7 +35,6 @@ class LLMProtocol(Protocol):
 
     @property
     def is_loaded(self) -> bool: ...
-
 
 class ModelManager:
     """Owns the embedder, reranker, and LLM instances.
@@ -56,10 +54,8 @@ class ModelManager:
         self._reranker: Reranker | None = None
         self._llm: LLMProtocol | None = None
         self._settings = settings
-        # Track which heavy model is currently resident.
         self._resident: str | None = None
 
-    # ── embedder ───────────────────────────────────────────────────────
     @property
     def embedder(self) -> Embedder:
         if self._embedder is None:
@@ -74,7 +70,6 @@ class ModelManager:
                 self._resident = "embedder"
         return self._embedder
 
-    # ── reranker ───────────────────────────────────────────────────────
     @property
     def reranker(self) -> Reranker:
         if self._reranker is None:
@@ -89,7 +84,6 @@ class ModelManager:
                 self._resident = "reranker"
         return self._reranker
 
-    # ── LLM ────────────────────────────────────────────────────────────
     @property
     def llm(self) -> LLMProtocol:
         if self._llm is None:
@@ -112,7 +106,6 @@ class ModelManager:
         self._llm = llm
         self._resident = "llm"
 
-    # ── memory policy ──────────────────────────────────────────────────
     def _unload_others(self, keep: str) -> None:
         """Unload all heavy models except the one we're about to load."""
         if keep != "embedder" and self._embedder is not None and self._embedder.is_loaded:
@@ -142,7 +135,6 @@ class ModelManager:
             "constrained_memory": self._constrained,
         }
 
-    # ── shutdown ───────────────────────────────────────────────────────
     def shutdown(self) -> None:
         """Unload all models and free memory."""
         for model in (self._embedder, self._reranker, self._llm):

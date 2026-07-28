@@ -14,26 +14,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load .env once at import time.  ``override=False`` keeps any value already
-# present in the real environment (e.g. CI secrets) ahead of the file.
 load_dotenv(override=False)
-
 
 @dataclass(frozen=True)
 class Settings:
     """Immutable application settings."""
 
-    # ── Runtime ────────────────────────────────────────────────────────
     app_env: str = field(default_factory=lambda: os.getenv("APP_ENV", "development"))
     data_dir: Path = field(default_factory=lambda: Path(os.getenv("DATA_DIR", "./data")))
     models_dir: Path = field(default_factory=lambda: Path(os.getenv("MODELS_DIR", "./models")))
     log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
 
-    # ── Server ─────────────────────────────────────────────────────────
     host: str = field(default_factory=lambda: os.getenv("HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: int(os.getenv("PORT", "8000")))
 
-    # ── Models ─────────────────────────────────────────────────────────
     embedding_model: str = field(
         default_factory=lambda: os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
     )
@@ -50,13 +44,10 @@ class Settings:
     llm_n_threads: int = field(default_factory=lambda: int(os.getenv("LLM_N_THREADS", "4")))
     llm_n_gpu_layers: int = field(default_factory=lambda: int(os.getenv("LLM_N_GPU_LAYERS", "0")))
 
-    # ── MCP ────────────────────────────────────────────────────────────
     mcp_transport: str = field(default_factory=lambda: os.getenv("MCP_TRANSPORT", "stdio"))
 
-    # ── Hugging Face ───────────────────────────────────────────────────
     hf_token: str | None = field(default_factory=lambda: os.getenv("HF_TOKEN") or None)
 
-    # ── Derived paths ──────────────────────────────────────────────────
     @property
     def db_path(self) -> Path:
         return self.data_dir / "research_library.db"
@@ -74,7 +65,6 @@ class Settings:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.chroma_path.mkdir(parents=True, exist_ok=True)
-
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

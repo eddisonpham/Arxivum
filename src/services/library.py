@@ -28,7 +28,6 @@ from src.utils import run_async
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class QueryResultItem:
     """A single library query result."""
@@ -56,7 +55,6 @@ class QueryResultItem:
             "chunk_type": self.chunk_type,
         }
 
-
 @dataclass
 class SearchResultItem:
     """A single arXiv search result after import."""
@@ -76,7 +74,6 @@ class SearchResultItem:
             "imported": self.imported,
         }
 
-
 class LibraryService:
     """High-level research library operations."""
 
@@ -94,7 +91,6 @@ class LibraryService:
         self.s2 = s2_client
         self.models = models
 
-    # ── search + import ────────────────────────────────────────────────
     def search_and_import(
         self,
         query: str,
@@ -140,7 +136,6 @@ class LibraryService:
 
     def _import_paper(self, paper: ArxivPaper, enrich: bool = False) -> None:
         """Persist a paper to SQLite + ChromaDB and optionally enrich."""
-        # 1. SQLite
         row = PaperRow(
             arxiv_id=paper.arxiv_id,
             title=paper.title,
@@ -162,14 +157,11 @@ class LibraryService:
             status="completed",
         ))
 
-        # 2. Enrich via S2 (sync wrapper if requested)
         if enrich:
             metrics = run_async(self._enrich_async(paper.arxiv_id))
         else:
-            # Write a placeholder metrics row so queries don't break.
             self.db.upsert_metrics(MetricsRow(arxiv_id=paper.arxiv_id))
 
-        # 3. ChromaDB — embed abstract + title
         self._index_paper(paper)
 
     def _index_paper(self, paper: ArxivPaper) -> None:
@@ -232,7 +224,6 @@ class LibraryService:
         )
         self.chroma.upsert_chunk(chunk)
 
-    # ── S2 enrichment ──────────────────────────────────────────────────
     async def _enrich_async(self, arxiv_id: str) -> S2Metrics:
         """Fetch S2 metrics and persist them."""
         try:
@@ -241,7 +232,6 @@ class LibraryService:
             logger.warning("S2 enrichment failed for %s: %s", arxiv_id, exc)
             metrics = S2Metrics(arxiv_id=arxiv_id)
         self._store_metrics(arxiv_id, metrics)
-        # Re-index so Chroma metadata has the real citation_count/venue.
         paper = self.db.get_paper(arxiv_id)
         if paper:
             arxiv_paper = ArxivPaper(
@@ -283,7 +273,6 @@ class LibraryService:
             raw_s2_json=json.dumps(m.raw) if m.raw else None,
         ))
 
-    # ── hybrid retrieval ───────────────────────────────────────────────
     def query_library(
         self,
         query: str,
@@ -311,21 +300,17 @@ class LibraryService:
             embedder = self.models.embedder
             q_vec = embedder.embed_one(query, is_query=True)
 
-            # Build Chroma metadata filter.
             where: dict[str, Any] = {}
             if primary_category:
                 where["primary_category"] = primary_category
 
-            # Over-fetch so we have enough after dedup.
             fetch_n = min(top_k * 4, 50)
             raw_results = self.chroma.query(
                 query_embedding=q_vec, top_k=fetch_n, where=where or None,
             )
 
-            # Deduplicate by arxiv_id, keeping the highest-scoring chunk.
             best_by_paper: dict[str, Any] = {}
             for r in raw_results:
-                # Apply post-filters that Chroma can't do natively.
                 if min_citations is not None and r.citation_count < min_citations:
                     continue
                 if venue and (r.venue is None or venue.lower() not in r.venue.lower()):
@@ -339,19 +324,16 @@ class LibraryService:
                 self.db.update_activity_status(log_id, "completed")
                 return []
 
-            # Rerank with cross-encoder (capped at 10 by Reranker).
             if rerank and len(candidates) > 1:
                 reranker = self.models.reranker
                 texts = [c.document for c in candidates]
                 ranked_idx = reranker.rerank(query, texts, top_k=top_k)
-                # Map back; cross-encoder scores are raw logits.
                 reranked = []
                 for idx, _score in ranked_idx:
                     c = candidates[idx]
                     reranked.append(c)
                 candidates = reranked
 
-            # Trim to top_k and enrich with DB metadata.
             results: list[QueryResultItem] = []
             for c in candidates[:top_k]:
                 paper = self.db.get_paper(c.arxiv_id)
@@ -375,7 +357,6 @@ class LibraryService:
             self.db.update_activity_status(log_id, "failed")
             raise
 
-    # ── paper removal ──────────────────────────────────────────────────
     def remove_paper(self, arxiv_id: str) -> bool:
         """Remove a paper and all derived data from the library."""
         log_id = self.db.log_activity(ActivityRow(
@@ -392,7 +373,6 @@ class LibraryService:
             self.db.update_activity_status(log_id, "failed")
             raise
 
-    # ── details ────────────────────────────────────────────────────────
     def get_paper_detail(self, arxiv_id: str) -> dict | None:
         """Return full metadata + metrics + summaries for a paper."""
         paper = self.db.get_paper(arxiv_id)
@@ -427,7 +407,6 @@ class LibraryService:
             ],
         }
 
-    # ── listing ────────────────────────────────────────────────────────
     def list_library(
         self,
         limit: int = 20,

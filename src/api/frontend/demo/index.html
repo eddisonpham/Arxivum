@@ -121,7 +121,6 @@
 </head>
 <body>
 
-<!-- Nav -->
 <nav>
   <div class="nav-brand">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -137,7 +136,6 @@
   </div>
 </nav>
 
-<!-- Hero -->
 <section class="hero">
   <h1>Research Library MCP</h1>
   <p>A local-first MCP server that lets coding agents discover, summarise, organise, and ideate over arXiv research papers — entirely on your own machine.</p>
@@ -147,7 +145,6 @@
   </div>
 </section>
 
-<!-- Features -->
 <section class="section">
   <h2>Features</h2>
   <p class="subtitle">Everything a coding agent needs to do research, offline.</p>
@@ -195,7 +192,6 @@
   </div>
 </section>
 
-<!-- Workflow -->
 <section class="section" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
   <h2>How It Works</h2>
   <p class="subtitle">The agent workflow from query to insight.</p>
@@ -204,7 +200,7 @@
       <div class="workflow-num">1</div>
       <div class="workflow-body">
         <h4>Agent sends a research query</h4>
-        <p>The coding agent calls <code>research:search_papers</code> with a natural-language query via the MCP protocol.</p>
+        <p>The coding agent calls <code>research_search_papers</code> with a natural-language query via the MCP protocol.</p>
       </div>
     </div>
     <div class="workflow-step">
@@ -225,7 +221,7 @@
       <div class="workflow-num">4</div>
       <div class="workflow-body">
         <h4>Follow-up queries</h4>
-        <p>The agent calls <code>research:query_library</code> to retrieve relevant papers using hybrid vector + metadata retrieval with cross-encoder reranking.</p>
+        <p>The agent calls <code>research_query_library</code> to retrieve relevant papers using hybrid vector + metadata retrieval with cross-encoder reranking.</p>
       </div>
     </div>
     <div class="workflow-step">
@@ -245,7 +241,6 @@
   </div>
 </section>
 
-<!-- Tech Stack -->
 <section class="section">
   <h2>Tech Stack</h2>
   <p class="subtitle">Lightweight, local-first, and CPU-friendly.</p>
@@ -264,7 +259,6 @@
   </div>
 </section>
 
-<!-- Quick Start -->
 <section class="section" style="background:var(--surface); border-top:1px solid var(--border);">
   <h2>Quick Start</h2>
   <p class="subtitle">Three commands to get running.</p>
@@ -279,7 +273,6 @@
   </div>
 </section>
 
-<!-- Footer -->
 <footer>
   <p>Research Library MCP &middot; <a href="/">Visual Panel</a> &middot; <a href="/docs">API Docs</a> &middot; MIT License</p>
   <p style="margin-top:8px; font-size:12px;">Local-first POC &middot; Cloud/HPC scaling is future work</p>

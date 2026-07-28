@@ -21,9 +21,7 @@ from src.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# All tools are prefixed with ``research_`` per the design docs.
 TOOL_PREFIX = "research_"
-
 
 def create_mcp_server(ctx: AppContext):
     """Create a FastMCP server with all research tools registered.
@@ -39,7 +37,6 @@ def create_mcp_server(ctx: AppContext):
     ideas_svc = ctx.ideas
     novelty_svc = ctx.novelty
 
-    # ── research_search_papers ─────────────────────────────────────────
     @mcp.tool()
     def research_search_papers(
         query: str,
@@ -72,7 +69,6 @@ def create_mcp_server(ctx: AppContext):
             "message": f"Imported {len(results)} paper(s) into the library.",
         }
         if summarize and results:
-            # Cap at 5 to stay within reasonable time bounds on CPU.
             for r in results[:5]:
                 try:
                     summarizer.summarize(r.arxiv_id)
@@ -80,7 +76,6 @@ def create_mcp_server(ctx: AppContext):
                     logger.warning("Summary failed for %s: %s", r.arxiv_id, exc)
         return json.dumps(out, ensure_ascii=False)
 
-    # ── research_query_library ─────────────────────────────────────────
     @mcp.tool()
     def research_query_library(
         query: str,
@@ -115,7 +110,6 @@ def create_mcp_server(ctx: AppContext):
             ensure_ascii=False,
         )
 
-    # ── research_get_paper_details ─────────────────────────────────────
     @mcp.tool()
     def research_get_paper_details(arxiv_id: str) -> str:
         """Get full metadata, citation metrics, summaries, and ideas for a
@@ -132,7 +126,6 @@ def create_mcp_server(ctx: AppContext):
             )
         return json.dumps(detail, ensure_ascii=False)
 
-    # ── research_remove_paper ──────────────────────────────────────────
     @mcp.tool()
     def research_remove_paper(arxiv_id: str, delete_files: bool = True) -> str:
         """Remove a paper and all derived data (summaries, ideas, embeddings)
@@ -148,7 +141,6 @@ def create_mcp_server(ctx: AppContext):
             ensure_ascii=False,
         )
 
-    # ── research_generate_summary ──────────────────────────────────────
     @mcp.tool()
     def research_generate_summary(
         arxiv_id: str,
@@ -176,7 +168,6 @@ def create_mcp_server(ctx: AppContext):
                 ensure_ascii=False,
             )
 
-    # ── research_generate_ideas ────────────────────────────────────────
     @mcp.tool()
     def research_generate_ideas(
         arxiv_id: str,
@@ -206,7 +197,6 @@ def create_mcp_server(ctx: AppContext):
                 ensure_ascii=False,
             )
 
-    # ── research_verify_novelty ────────────────────────────────────────
     @mcp.tool()
     def research_verify_novelty(
         idea_id: int,
@@ -232,7 +222,6 @@ def create_mcp_server(ctx: AppContext):
                 ensure_ascii=False,
             )
 
-    # ── research_list_library ──────────────────────────────────────────
     @mcp.tool()
     def research_list_library(
         limit: int = 20,
@@ -260,7 +249,6 @@ def create_mcp_server(ctx: AppContext):
         )
         return json.dumps(result, ensure_ascii=False)
 
-    # ── research_get_activity_log ──────────────────────────────────────
     @mcp.tool()
     def research_get_activity_log(limit: int = 50, action_type: str = "") -> str:
         """Return recent agent actions from the activity log for supervision.
@@ -291,7 +279,6 @@ def create_mcp_server(ctx: AppContext):
 
     return mcp
 
-
 def main() -> int:
     """Entry point for the MCP server."""
     settings = get_settings()
@@ -307,7 +294,6 @@ def main() -> int:
     finally:
         shutdown_app(ctx)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -7,7 +7,6 @@ from typing import Awaitable, TypeVar
 
 T = TypeVar("T")
 
-
 def run_async(coro: Awaitable[T]) -> T:
     """Run a coroutine to completion, safe in both sync and async contexts.
 
@@ -25,10 +24,8 @@ def run_async(coro: Awaitable[T]) -> T:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        # No running loop — safe to use asyncio.run().
         return asyncio.run(coro)
 
-    # There IS a running loop.  Schedule the coroutine on it from a thread.
     import concurrent.futures
     import threading
 

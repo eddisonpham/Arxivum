@@ -17,7 +17,6 @@ from src.services.prompts import constraint_messages, extract_json, idea_message
 
 logger = logging.getLogger(__name__)
 
-
 class IdeaService:
     """Generate novel research ideas from a paper."""
 
@@ -73,10 +72,8 @@ class IdeaService:
             metadata_json={"num_ideas": num_ideas, "focus_area": focus_area},
         ))
         try:
-            # 1. Extract constraints
             constraints = self._extract_constraints(paper.title, paper.abstract)
 
-            # 2. Generate ideas
             messages = idea_messages(
                 paper.title, paper.abstract, constraints, num_ideas, focus_area,
             )
@@ -86,7 +83,6 @@ class IdeaService:
             parsed = extract_json(raw)
             if not isinstance(parsed, list):
                 parsed = [parsed] if isinstance(parsed, dict) else []
-            # Truncate to the requested number of ideas.
             parsed = parsed[:num_ideas]
 
             model_name = getattr(self.models.llm, "model_path", "stub")

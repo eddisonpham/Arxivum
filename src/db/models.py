@@ -19,9 +19,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator, Sequence
 
-
-# ── Schema DDL ──────────────────────────────────────────────────────────────
-
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS papers (
     arxiv_id          TEXT PRIMARY KEY,
@@ -100,9 +97,6 @@ CREATE INDEX IF NOT EXISTS idx_summaries_arxiv        ON summaries(arxiv_id);
 CREATE INDEX IF NOT EXISTS idx_ideas_arxiv            ON ideas(arxiv_id);
 """
 
-
-# ── Dataclasses (row representations) ───────────────────────────────────────
-
 @dataclass
 class PaperRow:
     arxiv_id: str
@@ -121,7 +115,6 @@ class PaperRow:
     created_at: str = ""
     updated_at: str = ""
 
-
 @dataclass
 class MetricsRow:
     arxiv_id: str
@@ -132,7 +125,6 @@ class MetricsRow:
     raw_s2_json: str | None = None
     created_at: str = ""
 
-
 @dataclass
 class SummaryRow:
     id: int | None
@@ -141,7 +133,6 @@ class SummaryRow:
     content: str
     model_used: str | None = None
     created_at: str = ""
-
 
 @dataclass
 class IdeaRow:
@@ -154,7 +145,6 @@ class IdeaRow:
     search_queries: list[str] = field(default_factory=list)
     created_at: str = ""
 
-
 @dataclass
 class NoveltyCheckRow:
     id: int | None
@@ -164,7 +154,6 @@ class NoveltyCheckRow:
     verdict: str = ""
     notes: str | None = None
     created_at: str = ""
-
 
 @dataclass
 class ActivityRow:
@@ -176,12 +165,8 @@ class ActivityRow:
     metadata_json: dict | None = None
     created_at: str = ""
 
-
-# ── Database ────────────────────────────────────────────────────────────────
-
 def _now_iso() -> str:
     return datetime.utcnow().isoformat()
-
 
 class Database:
     """Thin SQLite wrapper with typed helpers."""
@@ -191,10 +176,8 @@ class Database:
         self._conn: sqlite3.Connection | None = None
         self._connect()
 
-    # ── connection management ──────────────────────────────────────────
     def _connect(self) -> None:
         path = self.path or ":memory:"
-        # check_same_thread=False so FastAPI / MCP background tasks can share it.
         self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL;")
@@ -225,7 +208,6 @@ class Database:
             conn.rollback()
             raise
 
-    # ── papers ─────────────────────────────────────────────────────────
     def upsert_paper(self, p: PaperRow) -> None:
         now = _now_iso()
         p.created_at = p.created_at or now
@@ -322,7 +304,6 @@ class Database:
             updated_at=row["updated_at"],
         )
 
-    # ── metrics ────────────────────────────────────────────────────────
     def upsert_metrics(self, m: MetricsRow) -> None:
         m.created_at = m.created_at or _now_iso()
         with self.transaction() as conn:
@@ -360,7 +341,6 @@ class Database:
             created_at=row["created_at"],
         )
 
-    # ── summaries ──────────────────────────────────────────────────────
     def upsert_summary(self, s: SummaryRow) -> int:
         s.created_at = s.created_at or _now_iso()
         with self.transaction() as conn:
@@ -410,7 +390,6 @@ class Database:
             created_at=row["created_at"],
         )
 
-    # ── ideas ──────────────────────────────────────────────────────────
     def add_idea(self, i: IdeaRow) -> int:
         i.created_at = i.created_at or _now_iso()
         with self.transaction() as conn:
@@ -460,7 +439,6 @@ class Database:
             created_at=row["created_at"],
         )
 
-    # ── novelty checks ─────────────────────────────────────────────────
     def add_novelty_check(self, n: NoveltyCheckRow) -> int:
         n.created_at = n.created_at or _now_iso()
         with self.transaction() as conn:
@@ -494,7 +472,6 @@ class Database:
             for r in rows
         ]
 
-    # ── activity log ───────────────────────────────────────────────────
     def log_activity(self, a: ActivityRow) -> int:
         a.created_at = a.created_at or _now_iso()
         with self.transaction() as conn:

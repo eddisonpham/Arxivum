@@ -18,7 +18,6 @@ from src.services.prompts import SUMMARY_SECTIONS, extract_json, summary_message
 
 logger = logging.getLogger(__name__)
 
-
 class SummarizerService:
     """Generate and cache structured paper summaries."""
 
@@ -45,7 +44,6 @@ class SummarizerService:
         """
         requested = list(sections) if sections else list(SUMMARY_SECTIONS)
 
-        # Return cached if available and not forced.
         if not force:
             cached: dict[str, str] = {}
             for section in requested:
@@ -82,7 +80,6 @@ class SummarizerService:
                     id=None, arxiv_id=arxiv_id, section=section,
                     content=content, model_used=model_name,
                 ))
-                # Index the summary section as a ChromaDB chunk for RAG.
                 if content != "N/A":
                     try:
                         self.library.index_summary_section(arxiv_id, section, content)

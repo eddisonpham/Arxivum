@@ -9,8 +9,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-# ── Summarization ────────────────────────────────────────────────────────────
-
 SUMMARY_SECTIONS = [
     "problem_statement",
     "methodology",
@@ -20,7 +18,6 @@ SUMMARY_SECTIONS = [
     "limitations",
     "overall",
 ]
-
 
 def summary_messages(title: str, abstract: str, sections: list[str]) -> list[dict]:
     """Build chat messages for structured summarization.
@@ -50,9 +47,6 @@ def summary_messages(title: str, abstract: str, sections: list[str]) -> list[dic
         },
     ]
 
-
-# ── Constraint extraction ────────────────────────────────────────────────────
-
 def constraint_messages(title: str, abstract: str) -> list[dict]:
     """Extract assumptions, biases, limitations, domain, key method."""
     return [
@@ -78,9 +72,6 @@ def constraint_messages(title: str, abstract: str) -> list[dict]:
             ),
         },
     ]
-
-
-# ── Idea generation ─────────────────────────────────────────────────────────
 
 def idea_messages(
     title: str,
@@ -118,9 +109,6 @@ def idea_messages(
         },
     ]
 
-
-# ── Novelty verification ─────────────────────────────────────────────────────
-
 def novelty_messages(
     idea_text: str,
     candidate_title: str,
@@ -151,9 +139,6 @@ def novelty_messages(
         },
     ]
 
-
-# ── JSON extraction helper ───────────────────────────────────────────────────
-
 def extract_json(raw: str) -> Any:
     """Best-effort extraction of JSON from an LLM response.
 
@@ -164,7 +149,6 @@ def extract_json(raw: str) -> Any:
     Returns the parsed object/array, or raises ``ValueError`` on failure.
     """
     text = raw.strip()
-    # Strip markdown code fences if present.
     if text.startswith("```"):
         text = text.split("\n", 1)[-1] if "\n" in text else text[3:]
         if text.endswith("```"):
@@ -176,8 +160,6 @@ def extract_json(raw: str) -> Any:
     except json.JSONDecodeError:
         pass
 
-    # Try to find the first balanced JSON object or array.
-    # Pick whichever opener ({ or [) appears first in the text.
     brace_start = text.find("{")
     bracket_start = text.find("[")
     candidates: list[tuple[int, str, str]] = []

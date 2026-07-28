@@ -13,7 +13,6 @@ from typing import Callable, Sequence
 
 logger = logging.getLogger(__name__)
 
-
 class LocalLLM:
     """Lazy-loading local LLM backed by llama.cpp."""
 
@@ -28,7 +27,7 @@ class LocalLLM:
         self._n_ctx = n_ctx
         self._n_threads = n_threads
         self._n_gpu_layers = n_gpu_layers
-        self._llm = None  # loaded on first use
+        self._llm = None
 
     @property
     def is_loaded(self) -> bool:
@@ -97,7 +96,6 @@ class LocalLLM:
             self._llm = None
             logger.info("LLM unloaded: %s", self._model_path)
 
-
 class StubLLM:
     """Deterministic stub LLM for unit tests.
 
@@ -112,7 +110,7 @@ class StubLLM:
     ) -> None:
         self._responder = responder
         self._default = default
-        self.calls: list[list[dict]] = []  # record all calls for assertions
+        self.calls: list[list[dict]] = []
 
     @property
     def is_loaded(self) -> bool:
@@ -136,4 +134,4 @@ class StubLLM:
         return self._default
 
     def unload(self) -> None:
-        pass  # nothing to free
+        pass

@@ -24,7 +24,6 @@ from src.services.summarizer import SummarizerService
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class AppContext:
     """Container holding all wired application components."""
@@ -38,7 +37,6 @@ class AppContext:
     summarizer: SummarizerService
     ideas: IdeaService
     novelty: NoveltyService
-
 
 def create_app(
     db_path: str = "",
@@ -84,7 +82,6 @@ def create_app(
     logger.info("App context created (db=%s, chroma=%s)", db_path or ":memory:",
                 chroma_path or "ephemeral")
     return ctx
-
 
 def shutdown_app(ctx: AppContext) -> None:
     """Gracefully close all resources."""
