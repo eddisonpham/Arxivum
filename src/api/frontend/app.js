@@ -219,8 +219,19 @@ function connectActivityWS() {
   ws.onmessage = (ev) => {
     try {
       const msg = JSON.parse(ev.data);
-      // If we're on the activity page, refresh.
       if (el("activity-feed")) loadActivity();
+      if (msg.action_type === "summarize" && msg.status === "completed") {
+        const path = location.pathname.match(/\/paper\/(.+)/);
+        if (path && msg.arxiv_id && path[1] === msg.arxiv_id) {
+          refreshSummaries(path[1]);
+        }
+      }
+      if (msg.action_type === "idea" && msg.status === "completed") {
+        const path = location.pathname.match(/\/paper\/(.+)/);
+        if (path && msg.arxiv_id && path[1] === msg.arxiv_id) {
+          refreshIdeas(path[1]);
+        }
+      }
     } catch (_) {}
   };
   ws.onclose = () => setTimeout(connectActivityWS, 5000);
@@ -305,7 +316,8 @@ async function loadPaperDetail(arxivId) {
     // Generate summary
     const genSumBtn = el("gen-summary-btn");
     if (genSumBtn) genSumBtn.onclick = async () => {
-      genSumBtn.disabled = true; genSumBtn.textContent = "Generating…";
+      genSumBtn.disabled = true;
+      const timer = showGeneratingTimer(genSumBtn, "Generating");
       try {
         const data = await api(`/summaries/${arxivId}`, { method: "POST", body: JSON.stringify({}) });
         const sm = data.summaries || {};
@@ -314,31 +326,32 @@ async function loadPaperDetail(arxivId) {
           if (c) c.textContent = sm[s] || "N/A";
         });
       } catch (e) { alert(`Failed: ${e.message}`); }
-      finally { genSumBtn.disabled = false; genSumBtn.textContent = "Generate"; }
+      finally { clearInterval(timer); genSumBtn.disabled = false; genSumBtn.textContent = "Generate"; }
     };
 
     // Generate ideas
     const genIdeasBtn = el("gen-ideas-btn");
     if (genIdeasBtn) genIdeasBtn.onclick = async () => {
-      genIdeasBtn.disabled = true; genIdeasBtn.textContent = "Generating…";
+      genIdeasBtn.disabled = true;
+      const timer = showGeneratingTimer(genIdeasBtn, "Generating");
       try {
         const data = await api(`/ideas/${arxivId}`, { method: "POST", body: JSON.stringify({}) });
         el("ideas-list").innerHTML = (data.ideas || []).map(i => renderIdeaCard(i)).join("");
         attachIdeaActions(arxivId);
       } catch (e) { alert(`Failed: ${e.message}`); }
-      finally { genIdeasBtn.disabled = false; genIdeasBtn.textContent = "Generate"; }
+      finally { clearInterval(timer); genIdeasBtn.disabled = false; genIdeasBtn.textContent = "Generate"; }
     };
 
     // Enrich
     const enrichBtn = el("enrich-btn");
     if (enrichBtn) enrichBtn.onclick = async () => {
-      enrichBtn.disabled = true; enrichBtn.textContent = "Enriching…";
+      enrichBtn.disabled = true;
+      const timer = showGeneratingTimer(enrichBtn, "Enriching");
       try {
         const data = await api(`/library/${arxivId}/enrich`, { method: "POST" });
-        // Reload detail to show updated metrics
         loadPaperDetail(arxivId);
       } catch (e) { alert(`Enrich failed: ${e.message}`); }
-      finally { enrichBtn.disabled = false; enrichBtn.textContent = "Enrich via S2"; }
+      finally { clearInterval(timer); enrichBtn.disabled = false; enrichBtn.textContent = "Enrich via S2"; }
     };
 
     attachIdeaActions(arxivId);
@@ -383,13 +396,51 @@ async function rejectIdea(id) {
 }
 
 async function verifyNovelty(id) {
-  const el2 = el(`novelty-result-${id}`);
-  if (el2) el2.innerHTML = '<p class="text-xs text-muted">Verifying…</p>';
+  const resultEl = el(`novelty-result-${id}`);
+  if (resultEl) resultEl.innerHTML = '<div class="inline-spinner"><div class="spinner spinner-sm"></div><span class="text-xs text-muted">Verifying novelty (searching arXiv + LLM judgment)…</span></div>';
   try {
     const data = await api(`/novelty/${id}`, { method: "POST", body: JSON.stringify({}) });
     const cls = data.verdict === 'likely_novel' ? 'status-novel' : data.verdict === 'similar_exists' ? 'status-similar' : 'status-review';
-    if (el2) el2.innerHTML = `<p class="text-xs"><span class="status-badge ${cls}">${esc(data.verdict)}</span> ${esc(data.notes || '')}</p>`;
-  } catch (e) { if (el2) el2.innerHTML = `<p class="text-xs">Failed: ${esc(e.message)}</p>`; }
+    if (resultEl) resultEl.innerHTML = `<p class="text-xs"><span class="status-badge ${cls}">${esc(data.verdict)}</span> ${esc(data.notes || '')}</p>`;
+  } catch (e) { if (resultEl) resultEl.innerHTML = `<p class="text-xs">Failed: ${esc(e.message)}</p>`; }
+}
+
+// ── Generating timer (shows elapsed seconds on a button) ────────────────
+
+function showGeneratingTimer(btn, label) {
+  const start = Date.now();
+  btn.innerHTML = `<span class="btn-spinner"></span>${label}… <span class="timer-text">0s</span>`;
+  return setInterval(() => {
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    btn.innerHTML = `<span class="btn-spinner"></span>${label}… <span class="timer-text">${elapsed}s</span>`;
+  }, 1000);
+}
+
+// ── Auto-refresh summaries/ideas on paper page via WebSocket ─────────────
+
+async function refreshSummaries(arxivId) {
+  try {
+    const data = await api(`/summaries/${arxivId}`);
+    const sm = data.summaries || {};
+    const sections = ["problem_statement", "methodology", "findings", "ablations", "discussion", "limitations", "overall"];
+    sections.forEach(s => {
+      const c = document.querySelector(`.tab-content[data-section="${s}"] p`);
+      if (c && sm[s]) c.textContent = sm[s];
+    });
+  } catch (_) {}
+}
+
+async function refreshIdeas(arxivId) {
+  try {
+    const data = await api(`/ideas/${arxivId}`);
+    const list = el("ideas-list");
+    if (list) {
+      const ideas = data.ideas || [];
+      if (ideas.length) {
+        list.innerHTML = ideas.map(i => renderIdeaCard(i)).join("");
+      }
+    }
+  } catch (_) {}
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────
