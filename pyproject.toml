@@ -53,6 +53,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Exclude smoke tests from default runs (they need real models + network).
+# Run them explicitly: pytest tests/smoke/ -v -s
+norecursedirs = ["tests/smoke", "smoke"]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",

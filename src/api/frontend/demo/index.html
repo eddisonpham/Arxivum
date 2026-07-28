@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Library MCP — Demo</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --surface: #fff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b; --primary: #2563eb;
+      --primary-hover: #1d4ed8; --primary-light: #dbeafe;
+      --success: #16a34a; --success-light: #dcfce7;
+      --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+      --mono: "SF Mono", Consolas, monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+    }
+    nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 0 24px; height:56px; background:var(--surface);
+      border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+    }
+    .nav-brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:16px; }
+    .nav-brand svg { width:22px; height:22px; color:var(--primary); }
+    .nav-links { display:flex; gap:4px; }
+    .nav-links a {
+      padding:6px 14px; border-radius:var(--radius); text-decoration:none;
+      color:var(--muted); font-size:14px; font-weight:500; transition:all .15s;
+    }
+    .nav-links a:hover { background:var(--bg); color:var(--text); }
+    .nav-links a.active { background:var(--primary-light); color:var(--primary); }
+
+    .hero {
+      text-align:center; padding:80px 24px 60px; background:var(--surface);
+      border-bottom:1px solid var(--border);
+    }
+    .hero h1 { font-size:42px; font-weight:800; margin-bottom:16px; letter-spacing:-.02em; }
+    .hero p { font-size:18px; color:var(--muted); max-width:600px; margin:0 auto 28px; }
+    .hero .cta { display:flex; gap:12px; justify-content:center; }
+    .btn {
+      padding:10px 24px; border:none; border-radius:var(--radius);
+      font-size:15px; font-weight:500; cursor:pointer; transition:all .15s;
+      text-decoration:none; display:inline-block;
+    }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-hover); }
+    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover { background:var(--bg); }
+
+    .section { max-width:1000px; margin:0 auto; padding:60px 24px; }
+    .section h2 { font-size:28px; font-weight:700; margin-bottom:8px; text-align:center; }
+    .section .subtitle { text-align:center; color:var(--muted); margin-bottom:40px; font-size:16px; }
+
+    .features-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+      gap:20px;
+    }
+    .feature-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:24px; transition:transform .15s, box-shadow .15s;
+    }
+    .feature-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.10); }
+    .feature-card .icon {
+      width:40px; height:40px; border-radius:10px; display:flex;
+      align-items:center; justify-content:center; font-size:20px; margin-bottom:16px;
+    }
+    .feature-card h3 { font-size:16px; font-weight:600; margin-bottom:8px; }
+    .feature-card p { font-size:14px; color:var(--muted); }
+
+    .workflow { display:flex; flex-direction:column; gap:0; max-width:700px; margin:0 auto; }
+    .workflow-step {
+      display:flex; gap:20px; padding:20px 0; position:relative;
+    }
+    .workflow-step:not(:last-child)::after {
+      content:""; position:absolute; left:23px; top:60px; bottom:0;
+      width:2px; background:var(--border);
+    }
+    .workflow-num {
+      width:48px; height:48px; border-radius:50%; background:var(--primary-light);
+      color:var(--primary); display:flex; align-items:center; justify-content:center;
+      font-size:18px; font-weight:700; flex-shrink:0; z-index:1;
+    }
+    .workflow-body h4 { font-size:16px; font-weight:600; margin-bottom:4px; }
+    .workflow-body p { font-size:14px; color:var(--muted); }
+
+    .badges { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .badge {
+      padding:6px 14px; border-radius:20px; background:var(--surface);
+      border:1px solid var(--border); font-size:13px; font-weight:500;
+      color:var(--muted); font-family:var(--mono);
+    }
+
+    .quick-start {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:24px; max-width:600px; margin:0 auto;
+    }
+    .quick-start code {
+      display:block; font-family:var(--mono); font-size:13px;
+      padding:12px 16px; background:var(--bg); border-radius:6px;
+      margin:8px 0; overflow-x:auto; color:var(--text);
+    }
+    .quick-start .label { font-size:13px; color:var(--muted); margin-top:16px; margin-bottom:4px; }
+    .quick-start .label:first-child { margin-top:0; }
+
+    footer {
+      text-align:center; padding:40px 24px; border-top:1px solid var(--border);
+      color:var(--muted); font-size:14px;
+    }
+    footer a { color:var(--primary); text-decoration:none; }
+    footer a:hover { text-decoration:underline; }
+
+    @media (max-width:768px) {
+      .hero h1 { font-size:30px; }
+      .hero p { font-size:16px; }
+      .section { padding:40px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+    </svg>
+    <span>Research Library MCP</span>
+  </div>
+  <div class="nav-links">
+    <a href="/">Library</a>
+    <a href="/activity">Activity</a>
+    <a href="/demo" class="active">Demo</a>
+    <a href="/docs">API</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>Research Library MCP</h1>
+  <p>A local-first MCP server that lets coding agents discover, summarise, organise, and ideate over arXiv research papers — entirely on your own machine.</p>
+  <div class="cta">
+    <a href="/" class="btn btn-primary">Try Visual Panel</a>
+    <a href="/docs" class="btn btn-ghost">View API Docs</a>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section">
+  <h2>Features</h2>
+  <p class="subtitle">Everything a coding agent needs to do research, offline.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="icon" style="background:#dbeafe; color:#2563eb;">🔍</div>
+      <h3>arXiv Search + Enrichment</h3>
+      <p>Search arXiv and enrich results with citation counts, venue impact, and author data from Semantic Scholar — all free, no API keys required.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#dcfce7; color:#16a34a;">🔒</div>
+      <h3>Entirely Local &amp; Private</h3>
+      <p>No cloud LLM calls. All embeddings, reranking, and generation run on your CPU or small GPU via quantized GGUF models. Your data never leaves your machine.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#ede9fe; color:#7c3aed;">📊</div>
+      <h3>Hybrid Vector Library</h3>
+      <p>BGE embeddings + ChromaDB with hybrid vector + metadata retrieval. Filter by citations, venue, and category. Cross-encoder reranking for precision.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#fef3c7; color:#d97706;">📝</div>
+      <h3>Structured Summaries</h3>
+      <p>Auto-generate concise summaries: problem statement, methodology, findings, ablations, discussion, limitations. Each section indexed for RAG retrieval.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#fce7f3; color:#db2777;">💡</div>
+      <h3>Idea Generation</h3>
+      <p>Generate novel research ideas grounded in each paper's constraints, assumptions, and inductive biases. Each idea includes search queries for novelty checking.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#ccfbf1; color:#0d9488;">✅</div>
+      <h3>Novelty Re-verification</h3>
+      <p>Check generated ideas against your local library and arXiv. The LLM judges overlap and returns a verdict: likely novel, needs review, or similar exists.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#fee2e2; color:#dc2626;">🖥️</div>
+      <h3>Visual Supervision Panel</h3>
+      <p>A clean web UI to inspect the library, view summaries and ideas, approve/reject ideas, and monitor every action the agent performed in real time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon" style="background:#e0e7ff; color:#4f46e5;">🔌</div>
+      <h3>MCP Protocol</h3>
+      <p>Standard MCP server compatible with Cursor, Claude Code, Freebuff, and any MCP-aware agent. Nine tools covering the full research workflow.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Workflow -->
+<section class="section" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <h2>How It Works</h2>
+  <p class="subtitle">The agent workflow from query to insight.</p>
+  <div class="workflow">
+    <div class="workflow-step">
+      <div class="workflow-num">1</div>
+      <div class="workflow-body">
+        <h4>Agent sends a research query</h4>
+        <p>The coding agent calls <code>research:search_papers</code> with a natural-language query via the MCP protocol.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-num">2</div>
+      <div class="workflow-body">
+        <h4>Search arXiv + enrich</h4>
+        <p>The MCP server queries the arXiv API, optionally enriches results with Semantic Scholar citation/venue data, and stores papers in SQLite + ChromaDB.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-num">3</div>
+      <div class="workflow-body">
+        <h4>Embed and index</h4>
+        <p>Abstracts and titles are embedded with BGE and stored as vector chunks. Summary sections are indexed as they're generated for fine-grained RAG.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-num">4</div>
+      <div class="workflow-body">
+        <h4>Follow-up queries</h4>
+        <p>The agent calls <code>research:query_library</code> to retrieve relevant papers using hybrid vector + metadata retrieval with cross-encoder reranking.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-num">5</div>
+      <div class="workflow-body">
+        <h4>Summarise, ideate, verify</h4>
+        <p>The local LLM generates structured summaries, novel ideas grounded in constraints, and verifies novelty against the library and arXiv.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-num">6</div>
+      <div class="workflow-body">
+        <h4>Human supervision</h4>
+        <p>Every action is logged and surfaced in the visual panel. Researchers can inspect, approve/reject ideas, and remove irrelevant papers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="section">
+  <h2>Tech Stack</h2>
+  <p class="subtitle">Lightweight, local-first, and CPU-friendly.</p>
+  <div class="badges">
+    <span class="badge">Python 3.10+</span>
+    <span class="badge">FastAPI</span>
+    <span class="badge">ChromaDB</span>
+    <span class="badge">SQLite</span>
+    <span class="badge">MCP Protocol</span>
+    <span class="badge">llama.cpp</span>
+    <span class="badge">HuggingFace</span>
+    <span class="badge">BGE Embeddings</span>
+    <span class="badge">Qwen2.5-1.5B GGUF</span>
+    <span class="badge">arXiv API</span>
+    <span class="badge">Semantic Scholar</span>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section" style="background:var(--surface); border-top:1px solid var(--border);">
+  <h2>Quick Start</h2>
+  <p class="subtitle">Three commands to get running.</p>
+  <div class="quick-start">
+    <div class="label">1. Install</div>
+    <code>pip install -e ".[dev]"</code>
+    <div class="label">2. Download models (~1.5 GB, uses HF_TOKEN for download only)</div>
+    <code>python scripts/download_models.py</code>
+    <div class="label">3. Run the MCP server (for agents) or the web panel</div>
+    <code>python -m src.mcp_server    # MCP stdio for agents</code>
+    <code>python -m src.api.main      # Web panel at localhost:8000</code>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>Research Library MCP &middot; <a href="/">Visual Panel</a> &middot; <a href="/docs">API Docs</a> &middot; MIT License</p>
+  <p style="margin-top:8px; font-size:12px;">Local-first POC &middot; Cloud/HPC scaling is future work</p>
+</footer>
+
+</body>
+</html>
