@@ -3,9 +3,38 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Awaitable, TypeVar
+from contextlib import contextmanager
+from typing import Any, Awaitable, Iterator, TypeVar
+
+from src.db.models import ActivityRow, Database
 
 T = TypeVar("T")
+
+
+@contextmanager
+def track_activity(
+    db: Database, action_type: str, **kwargs: Any
+) -> Iterator[None]:
+    """Log an activity and auto-update its status on success or failure.
+
+    Usage::
+
+        with track_activity(db, "search", query=q):
+            results = do_work()
+            return results
+
+    The activity is marked ``completed`` on normal exit and ``failed`` on
+    any exception (which is re-raised).
+    """
+    log_id = db.log_activity(ActivityRow(
+        id=None, action_type=action_type, status="started", **kwargs,
+    ))
+    try:
+        yield
+        db.update_activity_status(log_id, "completed")
+    except Exception:
+        db.update_activity_status(log_id, "failed")
+        raise
 
 def run_async(coro: Awaitable[T]) -> T:
     """Run a coroutine to completion, safe in both sync and async contexts.

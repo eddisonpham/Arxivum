@@ -17,9 +17,10 @@ import logging
 from typing import Any, Callable
 
 from src.clients.arxiv_client import ArxivClient
-from src.db.models import ActivityRow, Database, NoveltyCheckRow
+from src.db.models import Database, NoveltyCheckRow
 from src.inference.manager import ModelManager
 from src.services.prompts import extract_json, novelty_messages
+from src.utils import track_activity
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +64,10 @@ class NoveltyService:
         if not idea:
             raise ValueError(f"Idea {idea_id} not found")
 
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="novelty", arxiv_id=idea.arxiv_id,
-            status="started", metadata_json={"idea_id": idea_id},
-        ))
-        try:
+        with track_activity(
+            self.db, "novelty", arxiv_id=idea.arxiv_id,
+            metadata_json={"idea_id": idea_id},
+        ):
             query_terms = list(idea.search_queries) if idea.search_queries else []
             if search_query:
                 query_terms.insert(0, search_query)
@@ -108,13 +108,7 @@ class NoveltyService:
             if not similar_ids and verdict == "likely_novel":
                 notes_parts.append("No similar work found in local library or arXiv.")
 
-            seen = set()
-            unique_similar = []
-            for sid in similar_ids:
-                if sid not in seen:
-                    seen.add(sid)
-                    unique_similar.append(sid)
-
+            unique_similar = list(dict.fromkeys(similar_ids))
             notes = " ".join(notes_parts) if notes_parts else "No notes."
             check_id = self.db.add_novelty_check(NoveltyCheckRow(
                 id=None, idea_id=idea_id,
@@ -122,7 +116,6 @@ class NoveltyService:
                 similar_arxiv_ids=unique_similar,
                 verdict=verdict, notes=notes,
             ))
-            self.db.update_activity_status(log_id, "completed")
 
             return {
                 "check_id": check_id,
@@ -132,9 +125,6 @@ class NoveltyService:
                 "similar_arxiv_ids": unique_similar,
                 "query_terms": query_terms,
             }
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
 
     def _local_check(
         self, idea_text: str, source_arxiv_id: str

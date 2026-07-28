@@ -24,7 +24,7 @@ from src.clients.s2_client import S2Metrics, SemanticScholarClient
 from src.db.chroma_store import CHUNK_ABSTRACT, CHUNK_TITLE, Chunk, ChromaStore
 from src.db.models import ActivityRow, Database, MetricsRow, PaperRow
 from src.inference.manager import ModelManager
-from src.utils import run_async
+from src.utils import run_async, track_activity
 
 logger = logging.getLogger(__name__)
 
@@ -106,11 +106,10 @@ class LibraryService:
         sentinel metrics and enrichment can be triggered separately via
         :meth:`enrich_paper`.
         """
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="search", query=query, status="started",
+        with track_activity(
+            self.db, "search", query=query,
             metadata_json={"max_results": max_results, "category": primary_category},
-        ))
-        try:
+        ):
             papers = self.arxiv.search(
                 query=query,
                 max_results=max_results,
@@ -128,11 +127,7 @@ class LibraryService:
                     venue=metrics.venue if metrics else None,
                     imported=True,
                 ))
-            self.db.update_activity_status(log_id, "completed")
             return results
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
 
     def _import_paper(self, paper: ArxivPaper, enrich: bool = False) -> None:
         """Persist a paper to SQLite + ChromaDB and optionally enrich."""
@@ -244,16 +239,8 @@ class LibraryService:
 
     async def enrich_paper(self, arxiv_id: str) -> S2Metrics:
         """Public async enrichment entry point."""
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="enrich", arxiv_id=arxiv_id, status="started",
-        ))
-        try:
-            metrics = await self._enrich_async(arxiv_id)
-            self.db.update_activity_status(log_id, "completed")
-            return metrics
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
+        with track_activity(self.db, "enrich", arxiv_id=arxiv_id):
+            return await self._enrich_async(arxiv_id)
 
     def enrich_paper_sync(self, arxiv_id: str) -> S2Metrics:
         """Sync wrapper for :meth:`enrich_paper`.
@@ -291,12 +278,11 @@ class LibraryService:
           4. Optionally rerank with the cross-encoder.
           5. Return top-k.
         """
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="query", query=query, status="started",
+        with track_activity(
+            self.db, "query", query=query,
             metadata_json={"top_k": top_k, "min_citations": min_citations,
                            "venue": venue, "rerank": rerank},
-        ))
-        try:
+        ):
             embedder = self.models.embedder
             q_vec = embedder.embed_one(query, is_query=True)
 
@@ -321,29 +307,23 @@ class LibraryService:
 
             candidates = list(best_by_paper.values())
             if not candidates:
-                self.db.update_activity_status(log_id, "completed")
                 return []
 
             if rerank and len(candidates) > 1:
                 reranker = self.models.reranker
                 texts = [c.document for c in candidates]
                 ranked_idx = reranker.rerank(query, texts, top_k=top_k)
-                reranked = []
-                for idx, _score in ranked_idx:
-                    c = candidates[idx]
-                    reranked.append(c)
-                candidates = reranked
+                candidates = [candidates[idx] for idx, _ in ranked_idx]
 
             results: list[QueryResultItem] = []
             for c in candidates[:top_k]:
                 paper = self.db.get_paper(c.arxiv_id)
                 metrics = self.db.get_metrics(c.arxiv_id)
-                snippet = c.document[:300]
                 results.append(QueryResultItem(
                     arxiv_id=c.arxiv_id,
                     title=c.title or (paper.title if paper else ""),
                     score=c.score,
-                    abstract_snippet=snippet,
+                    abstract_snippet=c.document[:300],
                     citation_count=metrics.citation_count if metrics else -1,
                     venue=metrics.venue if metrics else None,
                     primary_category=paper.primary_category if paper else None,
@@ -351,27 +331,13 @@ class LibraryService:
                     chunk_type=c.chunk_type,
                 ))
 
-            self.db.update_activity_status(log_id, "completed")
             return results
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
 
     def remove_paper(self, arxiv_id: str) -> bool:
         """Remove a paper and all derived data from the library."""
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="remove", arxiv_id=arxiv_id, status="started",
-        ))
-        try:
+        with track_activity(self.db, "remove", arxiv_id=arxiv_id):
             self.chroma.delete_by_arxiv_id(arxiv_id)
-            deleted = self.db.delete_paper(arxiv_id)
-            self.db.update_activity_status(
-                log_id, "completed" if deleted else "completed"
-            )
-            return deleted
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
+            return self.db.delete_paper(arxiv_id)
 
     def get_paper_detail(self, arxiv_id: str) -> dict | None:
         """Return full metadata + metrics + summaries for a paper."""

@@ -11,10 +11,11 @@ from __future__ import annotations
 import logging
 from typing import Sequence
 
-from src.db.models import ActivityRow, Database, SummaryRow
+from src.db.models import Database, SummaryRow
 from src.inference.manager import ModelManager
 from src.services.library import LibraryService
 from src.services.prompts import SUMMARY_SECTIONS, extract_json, summary_messages
+from src.utils import track_activity
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +58,10 @@ class SummarizerService:
         if not paper:
             raise ValueError(f"Paper {arxiv_id} not found in library")
 
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="summarize", arxiv_id=arxiv_id,
-            status="started", metadata_json={"sections": requested, "force": force},
-        ))
-        try:
+        with track_activity(
+            self.db, "summarize", arxiv_id=arxiv_id,
+            metadata_json={"sections": requested, "force": force},
+        ):
             messages = summary_messages(paper.title, paper.abstract, requested)
             raw = self.models.llm.chat(
                 messages=messages, temperature=0.3, max_tokens=1024,
@@ -88,11 +88,7 @@ class SummarizerService:
                                      arxiv_id, section, exc_info=True)
                 result[section] = content
 
-            self.db.update_activity_status(log_id, "completed")
             return result
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
 
     def get_cached(self, arxiv_id: str) -> dict[str, str]:
         """Return all cached summary sections for a paper (no LLM call)."""

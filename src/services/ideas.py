@@ -11,9 +11,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.db.models import ActivityRow, Database, IdeaRow
+from src.db.models import Database, IdeaRow
 from src.inference.manager import ModelManager
 from src.services.prompts import constraint_messages, extract_json, idea_messages
+from src.utils import track_activity
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +68,10 @@ class IdeaService:
         if not paper:
             raise ValueError(f"Paper {arxiv_id} not found in library")
 
-        log_id = self.db.log_activity(ActivityRow(
-            id=None, action_type="idea", arxiv_id=arxiv_id, status="started",
+        with track_activity(
+            self.db, "idea", arxiv_id=arxiv_id,
             metadata_json={"num_ideas": num_ideas, "focus_area": focus_area},
-        ))
-        try:
+        ):
             constraints = self._extract_constraints(paper.title, paper.abstract)
 
             messages = idea_messages(
@@ -114,11 +114,7 @@ class IdeaService:
                     "status": "pending",
                 })
 
-            self.db.update_activity_status(log_id, "completed")
             return ideas
-        except Exception:
-            self.db.update_activity_status(log_id, "failed")
-            raise
 
     def update_status(self, idea_id: int, status: str) -> bool:
         """Approve or reject an idea (human-in-the-loop)."""

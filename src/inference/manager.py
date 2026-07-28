@@ -12,7 +12,7 @@ swap in a deterministic LLM without touching the real GGUF model.
 from __future__ import annotations
 
 import logging
-from typing import Protocol
+from typing import Any, Callable, Protocol
 
 from src.config import get_settings
 from src.inference.embedder import Embedder
@@ -56,50 +56,42 @@ class ModelManager:
         self._settings = settings
         self._resident: str | None = None
 
+    def _acquire(self, name: str, factory: Callable[[], Any]) -> Any:
+        """Get or create a model, applying the constrained-memory policy."""
+        attr = f"_{name}"
+        model = getattr(self, attr)
+        if model is None:
+            model = factory()
+            setattr(self, attr, model)
+        if self._constrained and self._resident != name:
+            self._unload_others(name)
+            model._ensure_loaded()
+            self._resident = name
+        else:
+            model._ensure_loaded()
+            if self._resident is None:
+                self._resident = name
+        return model
+
     @property
     def embedder(self) -> Embedder:
-        if self._embedder is None:
-            self._embedder = Embedder(self._settings.embedding_model)
-        if self._constrained and self._resident != "embedder":
-            self._unload_others("embedder")
-            self._embedder._ensure_loaded()
-            self._resident = "embedder"
-        else:
-            self._embedder._ensure_loaded()
-            if self._resident is None:
-                self._resident = "embedder"
-        return self._embedder
+        return self._acquire("embedder", lambda: Embedder(self._settings.embedding_model))
 
     @property
     def reranker(self) -> Reranker:
-        if self._reranker is None:
-            self._reranker = Reranker(self._settings.reranker_model)
-        if self._constrained and self._resident != "reranker":
-            self._unload_others("reranker")
-            self._reranker._ensure_loaded()
-            self._resident = "reranker"
-        else:
-            self._reranker._ensure_loaded()
-            if self._resident is None:
-                self._resident = "reranker"
-        return self._reranker
+        return self._acquire("reranker", lambda: Reranker(self._settings.reranker_model))
 
     @property
     def llm(self) -> LLMProtocol:
-        if self._llm is None:
+        def _make_llm() -> LLMProtocol:
             from src.inference.llm import LocalLLM
-
-            self._llm = LocalLLM(
+            return LocalLLM(
                 model_path=self._settings.llm_model_path,
                 n_ctx=self._settings.llm_n_ctx,
                 n_threads=self._settings.llm_n_threads,
                 n_gpu_layers=self._settings.llm_n_gpu_layers,
             )
-        if self._constrained and self._resident != "llm":
-            self._unload_others("llm")
-            self._llm._ensure_loaded()
-            self._resident = "llm"
-        return self._llm
+        return self._acquire("llm", _make_llm)
 
     def set_llm(self, llm: LLMProtocol) -> None:
         """Inject a custom LLM (e.g. ``StubLLM`` for tests)."""
