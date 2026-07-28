@@ -1,8 +1,22 @@
-# Research Library MCP
+<p align="center">
+  <img src="assets/arxivum.png" alt="arxivum" width="640" style="border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
+</p>
 
-A **local-first** Model Context Protocol (MCP) server that lets coding agents
-(Cursor, Claude Code, Freebuff, and others) discover, summarise, organise,
-and ideate over arXiv research papers entirely on your own machine.
+<h1 align="center">arxivum</h1>
+
+<p align="center">
+  A <strong>local-first</strong> Model Context Protocol (MCP) server that lets coding agents
+  discover, summarise, organise, and ideate over arXiv research papers
+  entirely on your own machine.
+</p>
+
+<p align="center">
+  <a href="https://github.com/eddisonpham/Arxivum/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-green.svg" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-171%20passing-brightgreen.svg" />
+</p>
+
+---
 
 ## What it does
 
