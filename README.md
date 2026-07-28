@@ -120,7 +120,7 @@ See `.env.example` for the full list and defaults. Key options:
 | `LLM_N_THREADS` | `4` | CPU threads for LLM inference. |
 | `LLM_N_GPU_LAYERS` | `0` | GPU layers to offload (0 = pure CPU). |
 | `MCP_TRANSPORT` | `stdio` | MCP transport: `stdio` or `sse`. |
-| `HF_TOKEN` | — | Hugging Face token (model download only). |
+| `HF_TOKEN` | none | Hugging Face token (model download only). |
 
 ## Testing
 
