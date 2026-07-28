@@ -1,7 +1,44 @@
+# Agent planning context (private)
 Agent Context/*
+
+# Secrets / env
 .env
 env
+.env.local
+
+# Virtual envs
 .venv
 venv
-.pytest_cache/
+env
+
+# Python caches
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Runtime data (generated)
+data/
+models/
+*.db
+*.sqlite
+*.sqlite3
+
+# Smoke tests (gitignored — real network + model calls)
+smoke/
+tests/smoke/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
