@@ -63,8 +63,8 @@
           "2406.00007"
         ],
         "gold": [
-          "2404.01000",
-          "2309.01234"
+          "2309.01234",
+          "2404.01000"
         ],
         "ndcg@5": 0.7098097413968655,
         "p@5": 0.4
@@ -155,5 +155,44 @@
         "bibcode": "arXiv:2401.00001"
       }
     }
+  },
+  "tool_selection": {
+    "accuracy": 1.0,
+    "n_tasks": 42,
+    "per_tool_accuracy": {
+      "library_search": 1.0,
+      "library_paper": 1.0,
+      "library_find": 1.0
+    },
+    "confusion_count": 0,
+    "confusions": [],
+    "surface_old": {
+      "tool_count": 10,
+      "arg_count": 32,
+      "tool_names": [
+        "research_search_papers",
+        "research_query_library",
+        "research_get_paper_details",
+        "research_remove_paper",
+        "research_generate_summary",
+        "research_extract_paper",
+        "research_generate_ideas",
+        "research_verify_novelty",
+        "research_list_library",
+        "research_get_activity_log"
+      ]
+    },
+    "surface_new": {
+      "tool_count": 3,
+      "arg_count": 26,
+      "tool_names": [
+        "library_search",
+        "library_paper",
+        "library_find"
+      ],
+      "schema_token_est": 809
+    },
+    "tool_count_reduction": "10 -> 3",
+    "arg_count_reduction": "32 -> 26"
   }
 }

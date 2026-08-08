@@ -24,6 +24,9 @@ LLM judge: stub
 | Ideas: plausibility judge mean (1-5) | 3.00 | ≥ 3.00 | ✅ |
 | Novelty: accuracy vs ground truth | 25.00% | ≥ 70% | ❌ |
 | Extraction: schema coverage (8-field canonical) | 100.00% | ≥ 0.80 | ✅ |
+| Tool selection: stub-router accuracy on synthetic-task set | 100.00% (42 tasks) | ≥ 0.85 | ✅ |
+| Tool count (was 9, target 3) | 3 | ≤ 3 | ✅ |
+| Tool arg count reduction (was 32, target ≤ 27) | 26 | ≤ 27 | ✅ |
 
 ## Per-query retrieval (synthetic 4 queries)
 
@@ -32,7 +35,7 @@ LLM judge: stub
 | are mixture of experts models scalable? | 2406.00007, 2309.01234, 2402.00010, 2405.00005, 2401.00001 | 2401.00001 | 0.387 | 0.200 |
 | detect hallucinations in generated summaries | 2404.01000, 2406.00007, 2309.01234, 2401.00001, 2405.00005 | 2405.00005, 2309.01234 | 0.473 | 0.400 |
 | attention for long context inputs | 2309.01234, 2405.00005, 2404.01000, 2401.00001, 2402.00010 | 2406.00007 | 0.000 | 0.000 |
-| combine citation graph features with embeddings for paper retrieval | 2309.01234, 2404.01000, 2401.00001, 2405.00005, 2406.00007 | 2404.01000, 2309.01234 | 0.710 | 0.400 |
+| combine citation graph features with embeddings for paper retrieval | 2309.01234, 2404.01000, 2401.00001, 2405.00005, 2406.00007 | 2309.01234, 2404.01000 | 0.710 | 0.400 |
 
 ## Novelty (synthetic labelled pairs)
 

@@ -86,6 +86,17 @@ def _render_markdown(results: dict, env_meta: dict, hosts: dict) -> str:
                          f"{e['schema_coverage']:.2%}", "≥ 0.80",
                          "✅" if e["schema_coverage"] >= 0.8 else "❌"))
 
+    ts = results["tool_selection"]
+    crit_metrics.append(("Tool selection: stub-router accuracy on synthetic-task set",
+                         f"{ts['accuracy']:.2%} ({ts['n_tasks']} tasks)", "≥ 0.85",
+                         "✅" if ts["accuracy"] >= 0.85 else "❌"))
+    crit_metrics.append(("Tool count (was 9, target 3)",
+                         str(ts["surface_new"]["tool_count"]), "≤ 3",
+                         "✅" if ts["surface_new"]["tool_count"] <= 3 else "❌"))
+    crit_metrics.append(("Tool arg count reduction (was 32, target ≤ 27)",
+                         str(ts["surface_new"]["arg_count"]), "≤ 27",
+                         "✅" if ts["surface_new"]["arg_count"] <= 27 else "❌"))
+
     body = []
     body.append("# ArXivum Benchmark Results")
     body.append("")
@@ -165,6 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         bench_latency,
         bench_validation,
     )
+    from tests.benchmark.bench_tool_selection import bench_tool_selection
 
     use_real_llm = args.real
 
@@ -186,6 +198,9 @@ def main(argv: list[str] | None = None) -> int:
         from tests.benchmark.benchmarks import ContextStubLLM
         env.ctx.models.set_llm(ContextStubLLM())
 
+    from src.mcp_server.server import create_mcp_server
+    mcp_instance = create_mcp_server(env.ctx)
+
     print("Running benchmarks (mocked mode by default)...")
     t0 = time.perf_counter()
     results: dict = {}
@@ -199,6 +214,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  novelty done ({(time.perf_counter()-t0):.1f}s)")
     results["extraction"] = bench_extraction(env)
     print(f"  extraction done ({(time.perf_counter()-t0):.1f}s)")
+    router_llm = env.ctx.models.llm if use_real_llm else None
+    results["tool_selection"] = bench_tool_selection(
+        mcp_instance=mcp_instance, llm=router_llm,
+    )
+    print(f"  tool_selection done ({(time.perf_counter()-t0):.1f}s)")
 
     if not args.no_bb:
         try:
