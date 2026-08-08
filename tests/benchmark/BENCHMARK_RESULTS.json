@@ -1,0 +1,159 @@
+{
+  "query": {
+    "summary": {
+      "ndcg@5": 0.3925,
+      "mrr": 0.3833,
+      "p@5": 0.25,
+      "recall@5": 0.75
+    },
+    "per_query": [
+      {
+        "query": "are mixture of experts models scalable?",
+        "retrieved": [
+          "2406.00007",
+          "2309.01234",
+          "2402.00010",
+          "2405.00005",
+          "2401.00001"
+        ],
+        "gold": [
+          "2401.00001"
+        ],
+        "ndcg@5": 0.38685280723454163,
+        "p@5": 0.2
+      },
+      {
+        "query": "detect hallucinations in generated summaries",
+        "retrieved": [
+          "2404.01000",
+          "2406.00007",
+          "2309.01234",
+          "2401.00001",
+          "2405.00005"
+        ],
+        "gold": [
+          "2405.00005",
+          "2309.01234"
+        ],
+        "ndcg@5": 0.4731889542498568,
+        "p@5": 0.4
+      },
+      {
+        "query": "attention for long context inputs",
+        "retrieved": [
+          "2309.01234",
+          "2405.00005",
+          "2404.01000",
+          "2401.00001",
+          "2402.00010"
+        ],
+        "gold": [
+          "2406.00007"
+        ],
+        "ndcg@5": 0.0,
+        "p@5": 0.0
+      },
+      {
+        "query": "combine citation graph features with embeddings for paper retrieval",
+        "retrieved": [
+          "2309.01234",
+          "2404.01000",
+          "2401.00001",
+          "2405.00005",
+          "2406.00007"
+        ],
+        "gold": [
+          "2404.01000",
+          "2309.01234"
+        ],
+        "ndcg@5": 0.7098097413968655,
+        "p@5": 0.4
+      }
+    ]
+  },
+  "summarize": {
+    "summary": {
+      "section_completeness": 1.0,
+      "rouge_l_overall_vs_abstract": 0.0519,
+      "coverage_judge_mean_1to5": 3,
+      "n_papers": 7
+    }
+  },
+  "ideas": {
+    "summary": {
+      "ideas_per_paper_mean": 3,
+      "plausibility_judge_mean_1to5": 3,
+      "pairwise_jaccard_mean": 0.0361
+    }
+  },
+  "novelty": {
+    "summary": {
+      "accuracy": 0.25,
+      "n_pairs": 4
+    },
+    "per_pair": [
+      {
+        "kind": "novel",
+        "expected": "likely_novel",
+        "predicted": "likely_novel",
+        "ok": true
+      },
+      {
+        "kind": "novel",
+        "expected": "needs_review",
+        "predicted": "likely_novel",
+        "ok": false
+      },
+      {
+        "kind": "similar",
+        "expected": "similar_exists",
+        "predicted": "likely_novel",
+        "ok": false
+      },
+      {
+        "kind": "similar",
+        "expected": "similar_exists",
+        "predicted": "likely_novel",
+        "ok": false
+      }
+    ]
+  },
+  "extraction": {
+    "summary": {
+      "schema_coverage": 1.0,
+      "per_field_presence": {
+        "method": 1.0,
+        "datasets": 1.0,
+        "baselines": 1.0,
+        "headline_metric": 1.0,
+        "contribution": 1.0,
+        "limitations": 1.0,
+        "domain": 1.0,
+        "bibcode": 1.0
+      },
+      "n_papers": 7,
+      "example_schema": {
+        "method": "sparse top-k routed mixture-of-experts with anti-collapse regulariser",
+        "datasets": [
+          "language modelling corpus",
+          "code benchmark suite"
+        ],
+        "baselines": [
+          "dense transformer at matched FLOPS"
+        ],
+        "headline_metric": {
+          "name": "loss",
+          "value": "scaling-law slope -0.05",
+          "split": "language + code"
+        },
+        "contribution": "Empirical scaling-law analysis of mixture-of-experts routing with anti-collapse regulariser.",
+        "limitations": [
+          "evaluation limited to language + code",
+          "single compute regime per model"
+        ],
+        "domain": "deep learning scaling",
+        "bibcode": "arXiv:2401.00001"
+      }
+    }
+  }
+}
