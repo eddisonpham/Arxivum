@@ -17,6 +17,11 @@ Loading is best-effort: if the resolved model cannot be loaded
 (missing weights, no ``sentence-transformers`` installed, OOM),
 ``is_available()`` returns False and the model manager falls back to a
 hash pseudo-embedder so the rest of the pipeline still runs.
+
+Tier-2.1 cache: every ``embed`` call probes
+:class:`src.inference.embed_cache.EmbeddingCache` first; only on
+miss is the model load triggered.  Hit rate is exposed via the
+``model_state`` API response so the visual UI can show it.
 """
 
 from __future__ import annotations
@@ -115,20 +120,47 @@ class _SentenceTransformerEmbedder(Embedder):
         is_query: bool = False,
         normalize: bool = True,
     ) -> list[list[float]]:
-        self._ensure_loaded()
-        assert self._model is not None
-        inputs = (
+        """Embed a list of texts.
+
+        First probes :class:`src.inference.embed_cache.EmbeddingCache`;
+        only on miss does ``_ensure_loaded`` and the model encode
+        trigger.  Returns lists of equal length to ``texts``: cache
+        hits are served in ~1 ms, misses pay one model call.
+        """
+        from src.inference.embed_cache import default_cache
+
+        cache = default_cache()
+        prefixed_inputs = (
             [f"{self._query_prefix}{t}" for t in texts]
             if is_query and self._query_prefix
             else list(texts)
         )
-        vecs = self._model.encode(
-            inputs,
-            normalize_embeddings=normalize,
-            convert_to_numpy=True,
-            show_progress_bar=False,
-        )
-        return vecs.tolist()
+        out: list[list[float] | None] = [None] * len(prefixed_inputs)
+        miss_idx: list[int] = []
+        miss_inputs: list[str] = []
+        for i, inp in enumerate(prefixed_inputs):
+            cached = cache.lookup(self._model_name, inp)
+            if cached is not None:
+                out[i] = cached
+            else:
+                miss_idx.append(i)
+                miss_inputs.append(inp)
+
+        if miss_inputs:
+            self._ensure_loaded()
+            assert self._model is not None
+            vecs = self._model.encode(
+                miss_inputs,
+                normalize_embeddings=normalize,
+                convert_to_numpy=True,
+                show_progress_bar=False,
+            )
+            for j, idx in enumerate(miss_idx):
+                v = vecs[j].tolist()
+                out[idx] = v
+                cache.store(self._model_name, miss_inputs[j], v)
+
+        return [v if v is not None else [] for v in out]  # type: ignore[misc]  # populated
 
     def unload(self) -> None:
         if self._model is not None:

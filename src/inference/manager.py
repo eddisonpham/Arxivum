@@ -119,13 +119,22 @@ class ModelManager:
     @property
     def model_state(self) -> dict:
         """Return load state for all models (used by the visual panel)."""
-        return {
+        state = {
             "embedder_loaded": self._embedder is not None and self._embedder.is_loaded,
             "reranker_loaded": self._reranker is not None and self._reranker.is_loaded,
             "llm_loaded": self._llm is not None and self._llm.is_loaded,
             "resident": self._resident,
             "constrained_memory": self._constrained,
         }
+        try:
+            from src.inference.embed_cache import default_cache
+            state["embedder_cache"] = default_cache().stats()
+        except Exception:  # noqa: BLE001
+            state["embedder_cache"] = None
+        if self._embedder is not None:
+            state["embedder_model"] = self._embedder.model_name
+            state["embedder_dim"] = getattr(self._embedder, "dim", None)
+        return state
 
     def shutdown(self) -> None:
         """Unload all models and free memory."""
