@@ -140,12 +140,37 @@ def _render_markdown(results: dict, env_meta: dict, hosts: dict) -> str:
     for fname, frac in e["per_field_presence"].items():
         body.append(f"| `{fname}` | {frac:.2%} |")
     body.append("")
+    if "embedding" in results:
+        e = results["embedding"]
+        body.append("## Real-embedding fallback chain (real only)")
+        body.append("")
+        body.append(f"Probed across {len(e['runs'])} candidates on "
+                    f"{e['corpus_size']} document corpus, "
+                    f"{e['queries_evaluated']} graded queries.")
+        body.append("")
+        body.append("| Embedder | HF id | Loaded | Dim | NDCG@5 | NDCG@10 | P@5 | R@5 | MRR | Ref BEIR SciFact | Encode (ms) | Notes |")
+        body.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+        for r in e["runs"]:
+            status = "✅" if r["loaded"] else "❌"
+            error = r["error"] or ""
+            ref = (f"SciFact {r['ref_scifact_ndcg10']:.3f} | "
+                   f"COVID {r['ref_trec_covid_ndcg10']:.3f}") if r["ref_scifact_ndcg10"] > 0 else error
+            body.append(
+                f"| {r['name']} | `{r['hf_id']}` | {status} | {r['dim']} | "
+                f"{r['ndcg@5']:.3f} | {r['ndcg@10']:.3f} | {r['p@5']:.3f} | "
+                f"{r['r@5']:.3f} | {r['mrr']:.3f} | {ref} | {r['encode_ms']:.0f} | "
+                f"{r['notes'][:60]} |"
+            )
+        body.append("")
+        body.append("Reference NDCG@10 numbers come from BEIR / SciFact / TREC-COVID public leaderboards. Hash-pseudo NDCG is a floor only; the real-embedding rows are the reportable quality.")
+
     body.append("## How the numbers were produced")
     body.append("")
     body.append("```")
     body.append("python -m tests.benchmark.run_all                 # mocked mode (default)")
     body.append("python -m tests.benchmark.run_all --real          # real local LLM as judge")
     body.append("python -m tests.benchmark.run_all --no-bb        # skip live-API benches")
+    body.append("python -m tests.benchmark.run_all --real-embedder  # probe real embedder fallback chain")
     body.append("```")
     body.append("")
     body.append("Mocked mode uses deterministic hash-based pseudo-embeddings for")
@@ -153,15 +178,21 @@ def _render_markdown(results: dict, env_meta: dict, hosts: dict) -> str:
     body.append("JSON. The stub embeds the oracle outputs so the metric plumbing is")
     body.append("exercised end-to-end; only the *quality* of the LLM is mocked.")
     body.append("Re-run with `--real` to substitute the local LLM as both the")
-    body.append("summariser and the judge.")
+    body.append("summariser and the judge. `--real-embedder` adds the SPECTER2 /")
+    body.append("BGE-large / BGE-small availability probe to the report.")
     body.append("")
     return "\n".join(body)
+
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--real", action="store_true", help="use real local LLM as judge")
     ap.add_argument("--no-bb", action="store_true", help="skip live-API benches")
+    ap.add_argument("--real-embedder", action="store_true",
+                    help="probe real embedding fallback chain (SPECTER2, BGE-large, "
+                         "BGE-small). Adds a per-embedder NDCG@5/10 table to results. "
+                         "Slow if no cached weights; skips gracefully if models unloadable.")
     ap.add_argument("--out", default=str(RESULTS_PATH),
                     help="output markdown path")
     args = ap.parse_args(argv)
@@ -231,6 +262,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Live API unavailable ({exc}); skipping network benches")
     else:
         print("--no-bb: skipping live-API benches")
+
+    if args.real_embedder:
+        from tests.benchmark.bench_real_embedding import bench_real_embedding
+        print("Probing real-embedding fallback chain (specter2 / bge-large / bge-small)...")
+        t_emb = time.perf_counter()
+        results["embedding"] = bench_real_embedding(include_chain=True)
+        print(f"  embedding chain done in {time.perf_counter()-t_emb:.1f}s")
 
     md = _render_markdown(results, env_meta=env_meta, hosts=_host_summary())
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)

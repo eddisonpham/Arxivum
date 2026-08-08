@@ -15,7 +15,7 @@ import logging
 from typing import Any, Callable, Protocol
 
 from src.config import get_settings
-from src.inference.embedder import Embedder
+from src.inference.embedder import Embedder, try_resolve
 from src.inference.reranker import Reranker
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class ModelManager:
 
     @property
     def embedder(self) -> Embedder:
-        return self._acquire("embedder", lambda: Embedder(self._settings.embedding_model))
+        return self._acquire("embedder", lambda: try_resolve(self._settings.embedding_model))
 
     @property
     def reranker(self) -> Reranker:

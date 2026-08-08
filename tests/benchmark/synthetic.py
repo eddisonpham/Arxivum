@@ -113,6 +113,61 @@ SYNTHETIC_QUERIES: list[dict] = [
 ]
 
 
+GRADED_QUERIES: list[dict] = [
+    {
+        "query": "sparse expert routing in mixture-of-experts transformers",
+        "gold_relevance": {
+            "2401.00001": 3,
+        },
+    },
+    {
+        "query": "long-context attention with linear-time kernels",
+        "gold_relevance": {
+            "2406.00007": 3,
+        },
+    },
+    {
+        "query": "sparse lexical expansion for retrieval-augmented generation",
+        "gold_relevance": {
+            "2403.00099": 3,
+            "2309.01234": 2,
+        },
+    },
+    {
+        "query": "factuality hallucination evaluation with question-answer overlap",
+        "gold_relevance": {
+            "2405.00005": 3,
+        },
+    },
+    {
+        "query": "use SPECTER embeddings with citation graph features for paper similarity",
+        "gold_relevance": {
+            "2404.01000": 3,
+            "2309.01234": 1,
+        },
+    },
+    {
+        "query": "hyperparameter sensitivity benchmark for deep learning",
+        "gold_relevance": {
+            "2402.00010": 3,
+        },
+    },
+    {
+        "query": "reference-free evaluation of retrieval augmented generation pipelines",
+        "gold_relevance": {
+            "2309.01234": 3,
+            "2403.00099": 1,
+        },
+    },
+    {
+        "query": "power-law scaling of model loss with active parameters",
+        "gold_relevance": {
+            "2401.00001": 2,
+        },
+    },
+]
+
+
 NOVELTY_PAIRS: list[dict] = [
     {
         "kind": "novel",
