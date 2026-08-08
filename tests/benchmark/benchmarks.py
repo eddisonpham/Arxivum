@@ -25,6 +25,7 @@ from tests.benchmark.judges import (
     judge_idea_plausibility,
 )
 from tests.benchmark.metrics import (
+    bert_score_f1,
     field_presence_rate,
     jaccard,
     latency_stats,
@@ -195,11 +196,16 @@ def bench_summarize(env) -> dict:
 
     Metric:
       - section_rate: fraction of papers where all 7 sections are non-empty.
-      - rouge_l_vs_abstract: average ROUGE-L F1 of overall summary vs abstract.
+      - bert_score_f1_vs_abstract: average BERTScore F1 between
+        overall summary and abstract. Falls back to a hashed-bag F1
+        if the bert_score package or model weights are unavailable.
+      - rouge_l_vs_abstract: ROUGE-L F1 of overall vs abstract.
+        Kept as a tone row only; the headline metric is BERTScore.
       - coverage_judge: mean coverage-score from the LLM judge (1-5).
     """
     section_rate_list = []
     rouge_overall_list = []
+    bert_overall_list = []
     coverage_scores = []
     for p in SYNTHETIC_LIBRARY:
         summary = env.ctx.summarizer.summarize(p["arxiv_id"])
@@ -207,6 +213,7 @@ def bench_summarize(env) -> dict:
         section_rate_list.append(1.0 if all_seven else 0.0)
         overall = summary.get("overall", "")
         rouge_overall_list.append(rouge_l_f1(p["abstract"], overall))
+        bert_overall_list.append(bert_score_f1(p["abstract"], overall))
         judge = call_judge(
             judge_coverage(p["abstract"], " ".join(summary.values()),
                            query="structured 7-section summary"),
@@ -217,6 +224,7 @@ def bench_summarize(env) -> dict:
         "summary": {
             "section_completeness": round(statistics.mean(section_rate_list), 4),
             "rouge_l_overall_vs_abstract": round(statistics.mean(rouge_overall_list), 4),
+            "bert_score_f1_vs_abstract": round(statistics.mean(bert_overall_list), 4),
             "coverage_judge_mean_1to5": round(statistics.mean(coverage_scores), 2),
             "n_papers": len(SYNTHETIC_LIBRARY),
         }

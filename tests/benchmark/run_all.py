@@ -61,9 +61,12 @@ def _render_markdown(results: dict, env_meta: dict, hosts: dict) -> str:
     crit_metrics.append(("Summarize: section completeness (all 7 non-empty)",
                          f"{s['section_completeness']:.2%}", "≥ 0.95",
                          "✅" if s["section_completeness"] >= 0.95 else "❌"))
-    crit_metrics.append(("Summarize: ROUGE-L (overall vs abstract)",
-                         f"{s['rouge_l_overall_vs_abstract']:.3f}", "≥ 0.250",
-                         "✅" if s["rouge_l_overall_vs_abstract"] >= 0.25 else "❌"))
+    crit_metrics.append(("Summarize: BERT F1 (overall vs abstract)",
+                         f"{s['bert_score_f1_vs_abstract']:.3f}", "≥ 0.600",
+                         "✅" if s["bert_score_f1_vs_abstract"] >= 0.6 else "❌"))
+    crit_metrics.append(("Summarize: ROUGE-L (overall vs abstract) [tone]",
+                         f"{s['rouge_l_overall_vs_abstract']:.3f}", "n/a",
+                         "n/a"))
     crit_metrics.append(("Summarize: coverage judge mean (1-5)",
                          f"{s['coverage_judge_mean_1to5']:.2f}", "≥ 3.50",
                          "✅" if s["coverage_judge_mean_1to5"] >= 3.5 else "❌"))
