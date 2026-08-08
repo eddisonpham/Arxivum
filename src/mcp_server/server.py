@@ -110,6 +110,33 @@ def create_mcp_server(ctx: AppContext):
             ensure_ascii=False,
         )
 
+    extractor_svc = ctx.extractor
+
+    @mcp.tool()
+    def research_extract_paper(arxiv_id: str, force: bool = False) -> str:
+        """Extract a structured bibliographic schema for a paper.
+
+        Returns a JSON object with method, datasets, baselines, headline
+        metric, contribution, limitations, domain, and bibcode. Schema
+        follows OpenAlex / SPECTER conventions so it round-trips into
+        BibTeX and LaTeX pipelines. Cached on first call.
+
+        Args:
+            arxiv_id: arXiv ID of the paper.
+            force: Regenerate even if cached.
+        """
+        try:
+            schema = extractor_svc.extract(arxiv_id, force=force)
+            return json.dumps(
+                {"arxiv_id": arxiv_id, "extraction": schema},
+                ensure_ascii=False,
+            )
+        except ValueError as exc:
+            return json.dumps(
+                {"error": "not_found", "message": str(exc)},
+                ensure_ascii=False,
+            )
+
     @mcp.tool()
     def research_get_paper_details(arxiv_id: str) -> str:
         """Get full metadata, citation metrics, summaries, and ideas for a
@@ -221,7 +248,6 @@ def create_mcp_server(ctx: AppContext):
                 {"error": "not_found", "message": str(exc)},
                 ensure_ascii=False,
             )
-
     @mcp.tool()
     def research_list_library(
         limit: int = 20,

@@ -285,6 +285,7 @@ def model_manager(stub_embedder, stub_reranker, stub_llm):
 def app_context(db, chroma_store, mock_arxiv_client, mock_s2_client, model_manager):
     """Fully-wired AppContext with all stubs/mocks."""
     from src.app import AppContext
+    from src.services.extractor import StructuredExtractor
     from src.services.ideas import IdeaService
     from src.services.library import LibraryService
     from src.services.novelty import NoveltyService
@@ -295,11 +296,13 @@ def app_context(db, chroma_store, mock_arxiv_client, mock_s2_client, model_manag
     ideas = IdeaService(db, model_manager)
     novelty = NoveltyService(db, model_manager, mock_arxiv_client,
                              library_query_fn=library.query_library)
+    extractor = StructuredExtractor(db, model_manager)
 
     ctx = AppContext(
         db=db, chroma=chroma_store, arxiv_client=mock_arxiv_client,
         s2_client=mock_s2_client, models=model_manager,
         library=library, summarizer=summarizer, ideas=ideas, novelty=novelty,
+        extractor=extractor,
     )
     yield ctx
 

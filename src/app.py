@@ -17,6 +17,7 @@ from src.config import get_settings
 from src.db.chroma_store import ChromaStore
 from src.db.models import Database
 from src.inference.manager import ModelManager
+from src.services.extractor import StructuredExtractor
 from src.services.ideas import IdeaService
 from src.services.library import LibraryService
 from src.services.novelty import NoveltyService
@@ -37,6 +38,7 @@ class AppContext:
     summarizer: SummarizerService
     ideas: IdeaService
     novelty: NoveltyService
+    extractor: StructuredExtractor
 
 def create_app(
     db_path: str = "",
@@ -46,15 +48,18 @@ def create_app(
     """Create and wire all application components.
 
     Args:
-        db_path: Path to SQLite DB.  Empty string = in-memory (for tests).
-        chroma_path: Path to ChromaDB.  Empty string = ephemeral (for tests).
+        db_path: Explicit path to the SQLite DB.  Pass ``":memory:"`` for an
+            ephemeral DB.  Empty string falls back to the configured default
+            (or in-memory if ``APP_ENV=test``).
+        chroma_path: Explicit path to ChromaDB.  Empty string falls back
+            to the configured default (or ephemeral if ``APP_ENV=test``).
         constrained_memory: If True, only one heavy model resident at a time.
     """
     settings = get_settings()
-    if not db_path:
-        db_path = str(settings.db_path) if settings.app_env != "test" else ""
-    if not chroma_path:
-        chroma_path = str(settings.chroma_path) if settings.app_env != "test" else ""
+    if db_path == "":
+        db_path = ":memory:" if settings.app_env == "test" else str(settings.db_path)
+    if chroma_path == "":
+        chroma_path = "" if settings.app_env == "test" else str(settings.chroma_path)
 
     if db_path:
         from pathlib import Path
@@ -73,11 +78,12 @@ def create_app(
         db, models, arxiv_client,
         library_query_fn=library.query_library,
     )
+    extractor = StructuredExtractor(db, models)
 
     ctx = AppContext(
         db=db, chroma=chroma, arxiv_client=arxiv_client, s2_client=s2_client,
         models=models, library=library, summarizer=summarizer,
-        ideas=ideas, novelty=novelty,
+        ideas=ideas, novelty=novelty, extractor=extractor,
     )
     logger.info("App context created (db=%s, chroma=%s)", db_path or ":memory:",
                 chroma_path or "ephemeral")

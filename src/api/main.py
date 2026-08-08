@@ -366,6 +366,40 @@ async def serve_activity_page() -> FileResponse:
         return FileResponse(str(page), media_type="text/html")
     return JSONResponse(status_code=404, content={"error": "not_found"})
 
+class ExtractRequest(BaseModel):
+    force: bool = False
+
+@app.post("/api/v1/library/{arxiv_id}/extract")
+async def extract_paper(arxiv_id: str, req: ExtractRequest) -> JSONResponse:
+    """Structured extraction of a paper's bibliographic schema.
+
+    Returns a JSON object with methods, datasets, baselines, headline
+    metric, contribution, limitations, domain, and bibcode. Cached on
+    first call; pass ``force=true`` to regenerate. Schema follows the
+    OpenAlex / SPECTER conventions so output round-trips into BibTeX
+    pipelines.
+    """
+    ctx = get_ctx()
+    try:
+        if not req.force:
+            cached = ctx.extractor.get_cached(arxiv_id)
+            if cached is not None:
+                return {"arxiv_id": arxiv_id, "extraction": cached,
+                        "cached": True}
+        schema = await asyncio.to_thread(ctx.extractor.extract, arxiv_id, req.force)
+        return {"arxiv_id": arxiv_id, "extraction": schema, "cached": False}
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "not_found", "message": str(exc)},
+        )
+    except Exception as exc:
+        logger.warning("Extraction failed for %s: %s", arxiv_id, exc)
+        return JSONResponse(
+            status_code=502,
+            content={"error": "extraction_failed", "message": str(exc)},
+        )
+
 @app.post("/api/v1/library/{arxiv_id}/enrich")
 async def enrich_paper(arxiv_id: str) -> JSONResponse:
     """Enrich a paper with Semantic Scholar citation/venue metrics."""

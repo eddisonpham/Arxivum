@@ -109,6 +109,7 @@ def idea_messages(
         },
     ]
 
+
 def novelty_messages(
     idea_text: str,
     candidate_title: str,
@@ -138,6 +139,47 @@ def novelty_messages(
             ),
         },
     ]
+
+
+def extract_messages(title: str, abstract: str, arxiv_id: str) -> list[dict]:
+    """Build chat messages for structured extraction (SPECTER/OSLO-style).
+
+    Asks the LLM to emit a single JSON object conforming to the
+    canonical arXivum schema. The schema is *operationally defined*
+    so that the output is comparable across papers and round-trippable
+    to BibTeX/LaTeX.
+    """
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are a scientific paper parser. Extract a structured "
+                "bibliographic schema for the given paper. Output ONLY "
+                "valid JSON — no markdown, no commentary, no extra keys."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Title: {title}\n"
+                f"Abstract: {abstract}\n"
+                f"arxiv_id: {arxiv_id}\n\n"
+                "Emit a JSON object with EXACTLY these keys:\n"
+                '  "method": "<one concise sentence naming the method>",\n'
+                '  "datasets": [<list of dataset names, may be empty>],\n'
+                '  "baselines": [<list of baseline system names, may be empty>],\n'
+                '  "headline_metric": {"name": "<metric name>", "value": "<value>", "split": "<eval split/benchmark name>"},\n'
+                '  "contribution": "<one-sentence contribution claim>",\n'
+                '  "limitations": [<list of admitted limitations, may be empty>],\n'
+                '  "domain": "<sub-field, e.g. deep-learning scaling, retrieval augmentation, summarisation>",\n'
+                '  "bibcode": "arXiv:<id>"\n\n'
+                "If a field is not stated or cannot be determined, use empty "
+                "string, empty list, or empty dict as appropriate.\n"
+                "Output the JSON object only:"
+            ),
+        },
+    ]
+
 
 def extract_json(raw: str) -> Any:
     """Best-effort extraction of JSON from an LLM response.
