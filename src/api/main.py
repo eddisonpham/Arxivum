@@ -20,12 +20,18 @@ from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.app import AppContext, create_app, shutdown_app
 from src.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+def _validate_query(raw: str) -> str:
+    cleaned = (raw or "").strip()
+    if len(cleaned) < 3:
+        raise ValueError("query must be at least 3 non-whitespace characters")
+    return cleaned
 
 class SearchRequest(BaseModel):
     query: str
@@ -34,6 +40,11 @@ class SearchRequest(BaseModel):
     auto_enrich: bool = False
     summarize: bool = False
 
+    @field_validator("query")
+    @classmethod
+    def _check_query(cls, v: str) -> str:
+        return _validate_query(v)
+
 class QueryRequest(BaseModel):
     query: str
     top_k: int = Field(default=5, ge=1, le=50)
@@ -41,6 +52,11 @@ class QueryRequest(BaseModel):
     venue: str = ""
     primary_category: str = ""
     rerank: bool = True
+
+    @field_validator("query")
+    @classmethod
+    def _check_query(cls, v: str) -> str:
+        return _validate_query(v)
 
 class SummaryRequest(BaseModel):
     sections: list[str] | None = None
