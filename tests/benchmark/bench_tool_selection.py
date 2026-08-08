@@ -23,10 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 from dataclasses import dataclass
-
-from tests.benchmark.synthetic import SYNTHETIC_LIBRARY
 
 
 # ── Synthetic task set (42 prompts) ─────────────────────────────────────
@@ -88,60 +85,31 @@ TASKS: list[Task] = [
 ]
 
 
-# ── Routing rules (deterministic, ordered most-specific first) ──────────
+def stub_route(prompt: str) -> tuple[str, list[str]]:
+    """Spec compatibility: defer to the production router.
 
-_ROUTING_RULES = [
-    # ── library_search: explicit arxiv-import verbs ──
-    (r"\b(search arxiv|arxiv search|from arxiv|on arxiv|pull from arxiv|new arxiv|into (the |my )?library|add to library|fetch)\b",
-     "library_search", 6),
-    (r"\b(look up|bring in|pull any new|pull new)\b", "library_search", 5),
-    (r"\b(import|import these|auto-?enrich)\b", "library_search", 7),
-    (r"\b(most-?cited|most-?popular|top-?cited|top-?downloaded)\b",
-     "library_search", 6),
-    (r"\b(since|prior to|in 20[0-9]{2}|since 20[0-9]{2})\b.*\b(papers|articles|pre-?prints|preprints|submissions)\b",
-     "library_search", 4),
-    (r"\bcs\.[a-z]{2,4}\b", "library_search", 3),
-    (r"\b(stat|math|q-?bio|eess|econ)\.[a-z]{2,4}\b", "library_search", 3),
-    (r"\btop\s+(three|five|ten|\d+)\b.*\b(papers|articles|preprints?)\b",
-     "library_search", 4),
+    Kept here because the benchmark has historically owned the rules.
+    Newly delegated to :func:`src.mcp_server.router.route` so the
+    production router and the benchmark can never drift.
+    """
+    from src.mcp_server.router import route as _prod_route
+    return _prod_route(prompt)
 
-    # ── library_paper: arxiv_id + action verbs + bibliographic schema ──
-    (r"[0-9]{4}\.[0-9]{4,5}", "library_paper", 5),
-    (r"\b(remove|delete|verify the novelty|approve idea|reject idea|mark as approved|mark as rejected|re-?extract|regenerate|re-extract|did we already)\b",
-     "library_paper", 5),
-    (r"\b(idea|ideas|extraction|extracted|bibliographic schema|schema|summari[sz]e|summary|summaries|abstract of|methods of|findings of|ablations of)\b",
-     "library_paper", 3),
 
-    # ── library_find: action log + local library scope ──
-    (r"\b(filter activity|filter by action_type|in the past hour|recent activity|activity log|recently added)\b",
-     "library_find", 6),
-    (r"\b(in my library|inside my library|in the library|my library|i have imported|i imported|filter list|filter_by)\b",
-     "library_find", 6),
-    (r"\b(sorted by|paginate|browse|list every|list all|list the first)\b",
-     "library_find", 4),
-    (r"\bwhat\b.*\b(runs?|actions?|history)\b.*\b(past|recent|last hour|in the past)\b",
-     "library_find", 5),
-    (r"\b(similar papers to|find similar to)\b", "library_find", 5),
+# Re-export the production router directly so external callers can
+# `from tests.benchmark.bench_tool_selection import stub_route` and
+# still get the canonical routing logic without an extra hop.
+
+__all__ = [
+    "TASKS",
+    "stub_route",
+    "real_llm_route",
+    "schema_token_estimate",
+    "get_old_tool_inventory",
+    "get_new_tool_inventory",
+    "bench_tool_selection",
 ]
 
-
-def stub_route(prompt: str) -> tuple[str, list[str]]:
-    """Deterministic weighted router. Returns (top_pick, ranked_candidates)."""
-    text = prompt.lower()
-    scored: dict[str, int] = {}
-    first_seen: dict[str, int] = {}
-    for idx, (pat, tool, weight) in enumerate(_ROUTING_RULES):
-        matches = len(re.findall(pat, text))
-        if matches:
-            scored[tool] = scored.get(tool, 0) + weight * matches
-            first_seen.setdefault(tool, idx)
-    if not scored:
-        return "library_find", ["library_find", "library_paper", "library_search"]
-    ranked = sorted(
-        scored.keys(),
-        key=lambda t: (-scored[t], first_seen[t]),
-    )
-    return ranked[0], ranked
 
 
 # ── Real-LLM router (--real mode) ───────────────────────────────────────

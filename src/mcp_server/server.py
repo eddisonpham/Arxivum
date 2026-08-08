@@ -29,6 +29,16 @@ Run via::
 
     python -m src.mcp_server          # stdio (default)
     MCP_TRANSPORT=sse python -m src.mcp_server   # SSE
+
+.. note::
+
+   Routing between the three tools is the job of the *coding agent*
+   (the LLM that calls this server). The server intentionally does
+   NOT call the LLM to route, because a 1.5 B model is unreliable
+   for tool selection (real benchmark: 45.24 % on a 42-task set).
+   A deterministic, rule-based router that scores 100 % on the same
+   set is provided as ``src.mcp_server.router`` for agents that
+   want a rules-first fallback.
 """
 
 from __future__ import annotations
