@@ -193,7 +193,7 @@ async function loadActivity() {
       feed.innerHTML = '<p class="text-muted">No activity yet.</p>';
       return;
     }
-    const icons = { search: "🔍", import: "📥", summarize: "📝", idea: "💡", novelty: "🔍", query: "❓", remove: "🗑", enrich: "📊" };
+    const icons = { search: "Srch", import: "Add", summarize: "Sum", idea: "Idea", novelty: "Nov", query: "Qry", remove: "Del", enrich: "Enr" };
     feed.innerHTML = items.map(a => `
       <div class="activity-item">
         <div class="activity-icon ${esc(a.action_type)}">${icons[a.action_type] || "•"}</div>
