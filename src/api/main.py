@@ -18,12 +18,15 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from src.app import AppContext, create_app, shutdown_app
 from src.config import get_settings
+from src.services.prompts import SUMMARY_SECTIONS, summary_messages
+from src.services.prompts import extract_json as _extract_json
+import re as _re
 
 logger = logging.getLogger(__name__)
 
@@ -288,6 +291,114 @@ async def list_ideas(arxiv_id: str) -> dict:
     """List all ideas for a paper."""
     ctx = get_ctx()
     return {"arxiv_id": arxiv_id, "ideas": ctx.ideas.list_ideas(arxiv_id)}
+
+@app.post("/api/v1/summaries/{arxiv_id}/stream",
+             response_model=None)
+async def stream_summary(arxiv_id: str, req: SummaryRequest):
+    """Server-Sent-Events stream of summary sections as the LLM
+    generates them.
+
+    Contract for the front-end:
+      * First event is ``skeleton`` describing which sections are
+        already cached (rendered immediately) so users see content
+        within ~200 tokens (~2 s on CPU-only Qwen2.5 1.5B).
+      * Subsequent events are ``section`` payloads as each field's
+        text becomes fully visible in the accumulated model output.
+      * A final ``done`` event closes the stream; on cache hit only
+        ``skeleton`` + ``done`` are emitted.
+    """
+    ctx = get_ctx()
+    paper = ctx.db.get_paper(arxiv_id)
+    if paper is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "not_found",
+                     "message": f"Paper {arxiv_id} not in library."})
+
+    requested = list(req.sections) if req.sections else list(SUMMARY_SECTIONS)
+    cached: dict = {}
+    if not req.force:
+        for section in requested:
+            row = ctx.db.get_summary(arxiv_id, section)
+            if row:
+                cached[section] = row.content
+
+    def _event_sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def _stream():
+        skeleton = {s: cached.get(s, "") for s in requested}
+        yield _event_sse("skeleton", {
+            "arxiv_id": arxiv_id, "sections": skeleton,
+            "n_cached": len(cached), "n_total": len(requested),
+        })
+        if len(cached) == len(requested):
+            yield _event_sse("done", {"arxiv_id": arxiv_id, "skipped": True})
+            return
+
+        messages = summary_messages(paper.title, paper.abstract, requested)
+        buffer_parts: list[str] = []
+        emitted: set = set(cached.keys())
+        section_re = _re.compile(
+            r'"(?P<section>problem_statement|methodology|findings|ablations|'
+            r'discussion|limitations|overall)"\s*:\s*"')
+
+        llm = ctx.models.llm
+        stream_fn = getattr(llm, "stream_chat", None)
+        if callable(stream_fn):
+            stream_iter = stream_fn(messages, temperature=0.3, max_tokens=1024)
+        else:
+            stream_iter = iter([llm.chat(messages, temperature=0.3,
+                                           max_tokens=1024)])
+
+        for token in stream_iter:
+            if not isinstance(token, str):
+                token = str(token)
+            buffer_parts.append(token)
+            buf = "".join(buffer_parts)
+            for m in section_re.finditer(buf):
+                sec = m.group("section")
+                if sec in requested and sec not in emitted:
+                    start_q = m.end()
+                    end_q = buf.find('"', start_q)
+                    if end_q >= 0:
+                        emitted.add(sec)
+                        content = buf[start_q:end_q]
+                        try:
+                            from src.db.models import SummaryRow
+                            ctx.db.upsert_summary(SummaryRow(
+                                id=None, arxiv_id=arxiv_id,
+                                section=sec, content=content,
+                                model_used=getattr(llm, "model_path",
+                                                    "stub"),
+                            ))
+                        except Exception:
+                            logger.debug(
+                                "Failed to persist streamed section %s#%s",
+                                arxiv_id, sec, exc_info=True)
+                        yield _event_sse("section", {
+                            "section": sec, "content": content,
+                        })
+
+        try:
+            final = _extract_json("".join(buffer_parts))
+            if isinstance(final, dict):
+                yield _event_sse("done", {"arxiv_id": arxiv_id,
+                                           "summary": final})
+            else:
+                yield _event_sse("done", {"arxiv_id": arxiv_id})
+        except Exception:
+            yield _event_sse("done", {"arxiv_id": arxiv_id})
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 @app.post("/api/v1/ideas/{idea_id}/status")
 async def update_idea_status(idea_id: int, req: IdeaStatusRequest) -> JSONResponse:

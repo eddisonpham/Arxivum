@@ -89,6 +89,42 @@ class LocalLLM:
         )
         return resp["choices"][0]["message"]["content"]
 
+    def stream_chat(
+        self,
+        messages: Sequence[dict],
+        temperature: float = 0.3,
+        max_tokens: int = 1024,
+        stop: list[str] | None = None,
+    ):
+        """Yield text chunks as the model generates them.
+
+        Used by ``/api/v1/library/<id>/summarize/stream`` to give the
+        user time-to-first-token.  Falls back to single-yield when
+        llama-cpp-python is older than 0.2 and lacks the stream kwarg.
+        """
+        self._ensure_loaded()
+        assert self._llm is not None
+        try:
+            stream = self._llm.create_chat_completion(
+                messages=list(messages),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stop=stop or [],
+                stream=True,
+            )
+        except TypeError:
+            yield self.chat(messages, temperature=temperature,
+                             max_tokens=max_tokens, stop=stop)
+            return
+        for chunk in stream:
+            try:
+                delta = chunk["choices"][0].get("delta", {})
+                content = delta.get("content")
+            except (KeyError, IndexError, TypeError):
+                content = None
+            if content:
+                yield content
+
     def unload(self) -> None:
         """Release the model from memory."""
         if self._llm is not None:
