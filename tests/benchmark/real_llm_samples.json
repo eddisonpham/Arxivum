@@ -1,0 +1,315 @@
+{
+  "metadata": {
+    "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "n_ctx": 4096,
+    "n_threads": 4,
+    "n_gpu_layers": 0,
+    "generated_at": "2026-08-08 01:36:44"
+  },
+  "summaries": {
+    "2401.00001": {
+      "raw": "{\n  \"problem_statement\": \"We study the scaling behavior of mixture-of-experts (MoE) transformer variants with sparse top-k routing.\",\n  \"methodology\": \"We empirically observe that model loss follows a power law in total parameters with a slope near -0.05 across compute budgets from 1e19 to 1e22 FLOPs.\",\n  \"findings\": \"We show that routing entropy plateaus when expert count exceeds a critical density, and propose a regulariser to prevent expert collapse.\",\n  \"ablations\": \"Results on language modelling and code benchmarks show consistent improvements over dense baselines at matched FLOPS.\",\n  \"discussion\": \"The findings suggest that sparse routing can lead to better scaling behavior in MoE transformers.\",\n  \"limitations\": \"The study is limited to MoE transformers and does not cover other types of transformers.\",\n  \"overall\": \"The paper presents empirical evidence and proposes a solution for improving the scaling behavior of MoE transformers with sparse routing.\"\n}",
+      "parsed": {
+        "problem_statement": "We study the scaling behavior of mixture-of-experts (MoE) transformer variants with sparse top-k routing.",
+        "methodology": "We empirically observe that model loss follows a power law in total parameters with a slope near -0.05 across compute budgets from 1e19 to 1e22 FLOPs.",
+        "findings": "We show that routing entropy plateaus when expert count exceeds a critical density, and propose a regulariser to prevent expert collapse.",
+        "ablations": "Results on language modelling and code benchmarks show consistent improvements over dense baselines at matched FLOPS.",
+        "discussion": "The findings suggest that sparse routing can lead to better scaling behavior in MoE transformers.",
+        "limitations": "The study is limited to MoE transformers and does not cover other types of transformers.",
+        "overall": "The paper presents empirical evidence and proposes a solution for improving the scaling behavior of MoE transformers with sparse routing."
+      },
+      "wall_ms": 8672.3
+    },
+    "2405.00005": {
+      "raw": "{\n  \"problem_statement\": \"We analyze factuality hallucinations in abstractive summarisation models.\",\n  \"methodology\": \"Using QAGS-style question-answer overlap as a hallucination probe, we find that even strong abstractive models introduce unsupported claims at rates of 12-18 percent.\",\n  \"findings\": \"We propose a constrained decoding strategy that reduces this rate by approximately half.\",\n  \"ablations\": \"N/A\",\n  \"discussion\": \"The findings highlight the need for more robust methods to detect and mitigate factuality hallucinations in abstractive summarisation.\",\n  \"limitations\": \"The study is based on a specific method (QAGS-style question-answer overlap) and may not apply to other summarisation models.\",\n  \"overall\": \"This paper provides a detailed analysis of factuality hallucinations in abstractive summarisation, proposing a solution to reduce their occurrence.\"\n}",
+      "parsed": {
+        "problem_statement": "We analyze factuality hallucinations in abstractive summarisation models.",
+        "methodology": "Using QAGS-style question-answer overlap as a hallucination probe, we find that even strong abstractive models introduce unsupported claims at rates of 12-18 percent.",
+        "findings": "We propose a constrained decoding strategy that reduces this rate by approximately half.",
+        "ablations": "N/A",
+        "discussion": "The findings highlight the need for more robust methods to detect and mitigate factuality hallucinations in abstractive summarisation.",
+        "limitations": "The study is based on a specific method (QAGS-style question-answer overlap) and may not apply to other summarisation models.",
+        "overall": "This paper provides a detailed analysis of factuality hallucinations in abstractive summarisation, proposing a solution to reduce their occurrence."
+      },
+      "wall_ms": 7716.6
+    },
+    "2309.01234": {
+      "raw": "{\n  \"problem_statement\": \"We propose RAGAS, a reference-free evaluation framework for RAG pipelines that measures faithfulness, answer relevancy, context precision, and context recall without ground-truth labels.\",\n  \"methodology\": \"We correlate each metric with human judgements across nine datasets and find Spearman rho in the 0.6-0.85 range.\",\n  \"findings\": \"RAGAS measures RAG pipeline performance without relying on ground-truth labels, providing a comprehensive evaluation framework.\",\n  \"ablations\": \"N/A\",\n  \"discussion\": \"The framework's metrics correlate well with human judgments, suggesting its reliability and utility.\",\n  \"limitations\": \"The framework's effectiveness may vary depending on the specific RAG pipeline and dataset.\",\n  \"overall\": \"RAGAS offers a novel approach to evaluating RAG pipelines without relying on ground-truth labels, providing a valuable tool for researchers and practitioners.\"\n}",
+      "parsed": {
+        "problem_statement": "We propose RAGAS, a reference-free evaluation framework for RAG pipelines that measures faithfulness, answer relevancy, context precision, and context recall without ground-truth labels.",
+        "methodology": "We correlate each metric with human judgements across nine datasets and find Spearman rho in the 0.6-0.85 range.",
+        "findings": "RAGAS measures RAG pipeline performance without relying on ground-truth labels, providing a comprehensive evaluation framework.",
+        "ablations": "N/A",
+        "discussion": "The framework's metrics correlate well with human judgments, suggesting its reliability and utility.",
+        "limitations": "The framework's effectiveness may vary depending on the specific RAG pipeline and dataset.",
+        "overall": "RAGAS offers a novel approach to evaluating RAG pipelines without relying on ground-truth labels, providing a valuable tool for researchers and practitioners."
+      },
+      "wall_ms": 7927.4
+    }
+  },
+  "ideas": {
+    "2401.00001": {
+      "raw": "[\n  {\n    \"title\": \"Exploring the Impact of Sparse Routing on MoE Transformer Performance\",\n    \"summary\": \"Investigate how sparse top-k routing affects the performance of mixture-of-experts transformer variants under different compute budgets.\",\n    \"extension\": \"This research extends the source by exploring the impact of sparse routing on MoE transformer performance, which is a key aspect of the original work.\",\n    \"next_steps\": [\"Run experiments with various sparse routing strategies and compare their performance with dense variants\"],\n    \"search_queries\": [\n      \"arXiv:2006.07735\",\n      \"arXiv:2006.07736\",\n      \"arXiv:2006.07737\"\n    ]\n  },\n  {\n    \"title\": \"Analyzing the Role of Expert Count in Mixture-of-Experts Routing\",\n    \"summary\": \"Determine the optimal expert count for mixture-of-experts routing in terms of computational efficiency and model performance.\",\n    \"extension\": \"This research extends the source by focusing on the optimal expert count, which is a key aspect of the original work.\",\n    \"next_steps\": [\"Simulate different expert counts and measure their impact on model performance and compute efficiency\"],\n    \"search_queries\": [\n      \"arXiv:2006.07738\",\n      \"arXiv:2006.07739\",\n      \"arXiv:2006.07740\"\n    ]\n  },\n  {\n    \"title\": \"Improving Mixture-of-Experts Routing with Adaptive Routing Strategies\",\n    \"summary\": \"Develop adaptive routing strategies that dynamically adjust the routing of experts based on the current state of the model.\",\n    \"extension\": \"This research extends the source by proposing adaptive routing strategies that improve the performance of mixture-of-experts routing.\",\n    \"next_steps\": [\"Implement adaptive routing strategies and evaluate their effectiveness on various benchmarks\"],\n    \"search_queries\": [\n      \"arXiv:2006.07741\",\n      \"arXiv:2006.07742\",\n      \"arXiv:2006.07743\"\n    ]\n  }\n]",
+      "parsed": [
+        {
+          "title": "Exploring the Impact of Sparse Routing on MoE Transformer Performance",
+          "summary": "Investigate how sparse top-k routing affects the performance of mixture-of-experts transformer variants under different compute budgets.",
+          "extension": "This research extends the source by exploring the impact of sparse routing on MoE transformer performance, which is a key aspect of the original work.",
+          "next_steps": [
+            "Run experiments with various sparse routing strategies and compare their performance with dense variants"
+          ],
+          "search_queries": [
+            "arXiv:2006.07735",
+            "arXiv:2006.07736",
+            "arXiv:2006.07737"
+          ]
+        },
+        {
+          "title": "Analyzing the Role of Expert Count in Mixture-of-Experts Routing",
+          "summary": "Determine the optimal expert count for mixture-of-experts routing in terms of computational efficiency and model performance.",
+          "extension": "This research extends the source by focusing on the optimal expert count, which is a key aspect of the original work.",
+          "next_steps": [
+            "Simulate different expert counts and measure their impact on model performance and compute efficiency"
+          ],
+          "search_queries": [
+            "arXiv:2006.07738",
+            "arXiv:2006.07739",
+            "arXiv:2006.07740"
+          ]
+        },
+        {
+          "title": "Improving Mixture-of-Experts Routing with Adaptive Routing Strategies",
+          "summary": "Develop adaptive routing strategies that dynamically adjust the routing of experts based on the current state of the model.",
+          "extension": "This research extends the source by proposing adaptive routing strategies that improve the performance of mixture-of-experts routing.",
+          "next_steps": [
+            "Implement adaptive routing strategies and evaluate their effectiveness on various benchmarks"
+          ],
+          "search_queries": [
+            "arXiv:2006.07741",
+            "arXiv:2006.07742",
+            "arXiv:2006.07743"
+          ]
+        }
+      ],
+      "wall_ms": 19893.8
+    },
+    "2405.00005": {
+      "raw": "[\n  {\n    \"title\": \"An empirical study of factuality hallucination in abstractive summarisation\",\n    \"summary\": \"An empirical study of factuality hallucination in abstractive summarisation models.\",\n    \"extension\": \"We analyze factuality hallucinations in abstractive summarisation models using QAGS-style question-answer overlap as a hallucination probe.\",\n    \"next_steps\": [\"1. Conduct a similar study using different summarisation models and datasets\"],\n    \"search_queries\": [\n      \"summarization factuality hallucination\",\n      \"abstractive summarization models\",\n      \"QAGS-style question-answer overlap\"\n    ]\n  },\n  {\n    \"title\": \"A comparative analysis of factuality hallucination in different summarisation models\",\n    \"summary\": \"A comparative analysis of factuality hallucination in different summarisation models.\",\n    \"extension\": \"We compare the factuality hallucination rates of different summarisation models and datasets.\",\n    \"next_steps\": [\"1. Analyze the results of the previous study and identify the most effective models\"],\n    \"search_queries\": [\n      \"summarization factuality hallucination\",\n      \"different summarisation models\",\n      \"QAGS-style question-answer overlap\"\n    ]\n  },\n  {\n    \"title\": \"A study on the impact of summarisation model architecture on factuality hallucination\",\n    \"summary\": \"A study on the impact of summarisation model architecture on factuality hallucination.\",\n    \"extension\": \"We investigate how the architecture of summarisation models affects the rate of factuality hallucinations.\",\n    \"next_steps\": [\"1. Modify the models to explore different architectures\"],\n    \"search_queries\": [\n      \"summarization factuality hallucination\",\n      \"model architecture\",\n      \"QAGS-style question-answer overlap\"\n    ]\n  }\n]",
+      "parsed": [
+        {
+          "title": "An empirical study of factuality hallucination in abstractive summarisation",
+          "summary": "An empirical study of factuality hallucination in abstractive summarisation models.",
+          "extension": "We analyze factuality hallucinations in abstractive summarisation models using QAGS-style question-answer overlap as a hallucination probe.",
+          "next_steps": [
+            "1. Conduct a similar study using different summarisation models and datasets"
+          ],
+          "search_queries": [
+            "summarization factuality hallucination",
+            "abstractive summarization models",
+            "QAGS-style question-answer overlap"
+          ]
+        },
+        {
+          "title": "A comparative analysis of factuality hallucination in different summarisation models",
+          "summary": "A comparative analysis of factuality hallucination in different summarisation models.",
+          "extension": "We compare the factuality hallucination rates of different summarisation models and datasets.",
+          "next_steps": [
+            "1. Analyze the results of the previous study and identify the most effective models"
+          ],
+          "search_queries": [
+            "summarization factuality hallucination",
+            "different summarisation models",
+            "QAGS-style question-answer overlap"
+          ]
+        },
+        {
+          "title": "A study on the impact of summarisation model architecture on factuality hallucination",
+          "summary": "A study on the impact of summarisation model architecture on factuality hallucination.",
+          "extension": "We investigate how the architecture of summarisation models affects the rate of factuality hallucinations.",
+          "next_steps": [
+            "1. Modify the models to explore different architectures"
+          ],
+          "search_queries": [
+            "summarization factuality hallucination",
+            "model architecture",
+            "QAGS-style question-answer overlap"
+          ]
+        }
+      ],
+      "wall_ms": 16296.3
+    },
+    "2309.01234": {
+      "raw": "[\n  {\n    \"title\": \"Develop a novel RAGAS variant that incorporates domain-specific knowledge for improved evaluation\",\n    \"summary\": \"Integrate domain-specific knowledge into RAGAS to enhance evaluation metrics.\",\n    \"extension\": \"RAGAS currently uses a reference-free approach. Incorporating domain-specific knowledge can provide more accurate evaluation.\",\n    \"next_steps\": [\"1. Identify key domain-specific features for evaluation\"],\n    \"search_queries\": [\n      \"rags evaluation\",\n      \"domain-specific knowledge\",\n      \"evaluation metrics\"\n    ]\n  },\n  {\n    \"title\": \"Explore the use of multi-modal inputs for RAGAS evaluation\",\n    \"summary\": \"Introduce multi-modal inputs such as images or videos to evaluate RAG pipelines.\",\n    \"extension\": \"RAGAS can be extended to evaluate RAG pipelines using multi-modal inputs, providing a more comprehensive evaluation.\",\n    \"next_steps\": [\"1. Identify suitable multi-modal inputs\"],\n    \"search_queries\": [\n      \"multi-modal inputs\",\n      \"RAGAS evaluation\",\n      \"evaluation metrics\"\n    ]\n  },\n  {\n    \"title\": \"Develop a RAGAS variant that leverages user feedback for improved evaluation\",\n    \"summary\": \"Integrate user feedback into RAGAS to improve evaluation metrics.\",\n    \"extension\": \"RAGAS can be extended to incorporate user feedback, providing a more personalized evaluation.\",\n    \"next_steps\": [\"1. Identify suitable user feedback mechanisms\"],\n    \"search_queries\": [\n      \"user feedback\",\n      \"RAGAS evaluation\",\n      \"evaluation metrics\"\n    ]\n  }\n]",
+      "parsed": [
+        {
+          "title": "Develop a novel RAGAS variant that incorporates domain-specific knowledge for improved evaluation",
+          "summary": "Integrate domain-specific knowledge into RAGAS to enhance evaluation metrics.",
+          "extension": "RAGAS currently uses a reference-free approach. Incorporating domain-specific knowledge can provide more accurate evaluation.",
+          "next_steps": [
+            "1. Identify key domain-specific features for evaluation"
+          ],
+          "search_queries": [
+            "rags evaluation",
+            "domain-specific knowledge",
+            "evaluation metrics"
+          ]
+        },
+        {
+          "title": "Explore the use of multi-modal inputs for RAGAS evaluation",
+          "summary": "Introduce multi-modal inputs such as images or videos to evaluate RAG pipelines.",
+          "extension": "RAGAS can be extended to evaluate RAG pipelines using multi-modal inputs, providing a more comprehensive evaluation.",
+          "next_steps": [
+            "1. Identify suitable multi-modal inputs"
+          ],
+          "search_queries": [
+            "multi-modal inputs",
+            "RAGAS evaluation",
+            "evaluation metrics"
+          ]
+        },
+        {
+          "title": "Develop a RAGAS variant that leverages user feedback for improved evaluation",
+          "summary": "Integrate user feedback into RAGAS to improve evaluation metrics.",
+          "extension": "RAGAS can be extended to incorporate user feedback, providing a more personalized evaluation.",
+          "next_steps": [
+            "1. Identify suitable user feedback mechanisms"
+          ],
+          "search_queries": [
+            "user feedback",
+            "RAGAS evaluation",
+            "evaluation metrics"
+          ]
+        }
+      ],
+      "wall_ms": 13311.5
+    }
+  },
+  "novelty": [
+    {
+      "pair": {
+        "kind": "novel",
+        "idea_text": "Train a small student model to imitate a mixture-of-experts teacher with shared routing logic, allowing cheaper inference.",
+        "candidate_arxiv_id": "2402.00010",
+        "expected_verdict": "likely_novel"
+      },
+      "output": {
+        "raw": "{\n  \"verdict\": \"similar_exists\",\n  \"reason\": \"The candidate paper proposes a benchmark for hyperparameter sensitivity in deep learning, which is not directly related to the proposed idea of training a small student model to imitate a mixture-of-experts teacher with shared routing logic.\"\n}",
+        "parsed": {
+          "verdict": "similar_exists",
+          "reason": "The candidate paper proposes a benchmark for hyperparameter sensitivity in deep learning, which is not directly related to the proposed idea of training a small student model to imitate a mixture-of-experts teacher with shared routing logic."
+        },
+        "wall_ms": 2779.7,
+        "expected_verdict": "likely_novel"
+      }
+    },
+    {
+      "pair": {
+        "kind": "novel",
+        "idea_text": "Use linear kernel attention to extend MoE routing context to 1M tokens for global document modelling.",
+        "candidate_arxiv_id": "2401.00001",
+        "expected_verdict": "needs_review"
+      },
+      "output": {
+        "raw": "{\n  \"verdict\": \"similar_exists\",\n  \"reason\": \"The candidate paper addresses the scaling behavior of MoE transformer variants with sparse top-k routing, which is closely related to the proposed idea of using linear kernel attention to extend MoE routing context to 1M tokens for global document modelling.\"\n}",
+        "parsed": {
+          "verdict": "similar_exists",
+          "reason": "The candidate paper addresses the scaling behavior of MoE transformer variants with sparse top-k routing, which is closely related to the proposed idea of using linear kernel attention to extend MoE routing context to 1M tokens for global document modelling."
+        },
+        "wall_ms": 2808.1,
+        "expected_verdict": "needs_review"
+      }
+    },
+    {
+      "pair": {
+        "kind": "similar",
+        "idea_text": "Combine citation graph coupling features with dense embeddings to get better paper similarity scores.",
+        "candidate_arxiv_id": "2404.01000",
+        "expected_verdict": "similar_exists"
+      },
+      "output": {
+        "raw": "{\n  \"verdict\": \"similar_exists\",\n  \"reason\": \"The candidate paper already addresses the proposed idea by combining citation graph features with dense embeddings to improve paper similarity scores.\"\n}",
+        "parsed": {
+          "verdict": "similar_exists",
+          "reason": "The candidate paper already addresses the proposed idea by combining citation graph features with dense embeddings to improve paper similarity scores."
+        },
+        "wall_ms": 1797.3,
+        "expected_verdict": "similar_exists"
+      }
+    },
+    {
+      "pair": {
+        "kind": "similar",
+        "idea_text": "Use QAGS-style question-answering overlap to detect unsupported claims in generated summaries.",
+        "candidate_arxiv_id": "2405.00005",
+        "expected_verdict": "similar_exists"
+      },
+      "output": {
+        "raw": "{\n  \"verdict\": \"similar_exists\",\n  \"reason\": \"The candidate paper already addresses the use of QAGS-style question-answering overlap to detect unsupported claims in generated summaries, which is the proposed idea.\"\n}",
+        "parsed": {
+          "verdict": "similar_exists",
+          "reason": "The candidate paper already addresses the use of QAGS-style question-answering overlap to detect unsupported claims in generated summaries, which is the proposed idea."
+        },
+        "wall_ms": 2207.8,
+        "expected_verdict": "similar_exists"
+      }
+    }
+  ],
+  "extraction": {
+    "2401.00001": {
+      "raw": "{\n  \"method\": \"We study scaling behaviour of mixture-of-experts (MoE) transformer variants with sparse top-k routing.\",\n  \"datasets\": [],\n  \"baselines\": [],\n  \"headline_metric\": {\"name\": \"model loss\", \"value\": \"-0.05\", \"split\": \"compute budgets\"},\n  \"contribution\": \"We empirically show that model loss follows a power law in total parameters with a slope near -0.05 across compute budgets from 1e19 to 1e22 FLOPs.\",\n  \"limitations\": [],\n  \"domain\": \"scaling\",\n  \"bibcode\": \"arXiv:2401.00001\"\n}",
+      "parsed": {
+        "method": "We study scaling behaviour of mixture-of-experts (MoE) transformer variants with sparse top-k routing.",
+        "datasets": [],
+        "baselines": [],
+        "headline_metric": {
+          "name": "model loss",
+          "value": "-0.05",
+          "split": "compute budgets"
+        },
+        "contribution": "We empirically show that model loss follows a power law in total parameters with a slope near -0.05 across compute budgets from 1e19 to 1e22 FLOPs.",
+        "limitations": [],
+        "domain": "scaling",
+        "bibcode": "arXiv:2401.00001"
+      },
+      "wall_ms": 6726.4
+    },
+    "2405.00005": {
+      "raw": "{\n  \"method\": \"We analyse factuality hallucinations in abstractive summarisation models using QAGS-style question-answer overlap as a hallucination probe.\",\n  \"datasets\": [\"QAGS-style question-answer overlap\"],\n  \"baselines\": [],\n  \"headline_metric\": {\"name\": \"factuality hallucination rate\", \"value\": \"12-18%\", \"split\": \"eval split/benchmark name\"},\n  \"contribution\": \"We propose a constrained decoding strategy that reduces factuality hallucination rate by approximately half.\",\n  \"limitations\": [],\n  \"domain\": \"summarisation\",\n  \"bibcode\": \"arXiv:2405.00005\"\n}",
+      "parsed": {
+        "method": "We analyse factuality hallucinations in abstractive summarisation models using QAGS-style question-answer overlap as a hallucination probe.",
+        "datasets": [
+          "QAGS-style question-answer overlap"
+        ],
+        "baselines": [],
+        "headline_metric": {
+          "name": "factuality hallucination rate",
+          "value": "12-18%",
+          "split": "eval split/benchmark name"
+        },
+        "contribution": "We propose a constrained decoding strategy that reduces factuality hallucination rate by approximately half.",
+        "limitations": [],
+        "domain": "summarisation",
+        "bibcode": "arXiv:2405.00005"
+      },
+      "wall_ms": 6371.4
+    },
+    "2309.01234": {
+      "raw": "{\n  \"method\": \"RAGAS: Automated evaluation of retrieval augmented generation\",\n  \"datasets\": [],\n  \"baselines\": [],\n  \"headline_metric\": {\n    \"name\": \"Spearman rho\",\n    \"value\": \"0.6-0.85\",\n    \"split\": \"9 datasets\"\n  },\n  \"contribution\": \"Proposed a reference-free evaluation framework for RAG pipelines.\",\n  \"limitations\": [],\n  \"domain\": \"retrieval augmentation\",\n  \"bibcode\": \"arXiv:2309.01234\"\n}",
+      "parsed": {
+        "method": "RAGAS: Automated evaluation of retrieval augmented generation",
+        "datasets": [],
+        "baselines": [],
+        "headline_metric": {
+          "name": "Spearman rho",
+          "value": "0.6-0.85",
+          "split": "9 datasets"
+        },
+        "contribution": "Proposed a reference-free evaluation framework for RAG pipelines.",
+        "limitations": [],
+        "domain": "retrieval augmentation",
+        "bibcode": "arXiv:2309.01234"
+      },
+      "wall_ms": 5451.2
+    }
+  }
+}

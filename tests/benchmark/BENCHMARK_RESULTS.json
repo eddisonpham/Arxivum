@@ -32,8 +32,8 @@
           "2405.00005"
         ],
         "gold": [
-          "2405.00005",
-          "2309.01234"
+          "2309.01234",
+          "2405.00005"
         ],
         "ndcg@5": 0.4731889542498568,
         "p@5": 0.4
@@ -75,7 +75,7 @@
     "summary": {
       "section_completeness": 1.0,
       "rouge_l_overall_vs_abstract": 0.0519,
-      "coverage_judge_mean_1to5": 3,
+      "coverage_judge_mean_1to5": 2.71,
       "n_papers": 7
     }
   },
@@ -83,38 +83,38 @@
     "summary": {
       "ideas_per_paper_mean": 3,
       "plausibility_judge_mean_1to5": 3,
-      "pairwise_jaccard_mean": 0.0361
+      "pairwise_jaccard_mean": 0.1283
     }
   },
   "novelty": {
     "summary": {
-      "accuracy": 0.25,
+      "accuracy": 0.5,
       "n_pairs": 4
     },
     "per_pair": [
       {
         "kind": "novel",
         "expected": "likely_novel",
-        "predicted": "likely_novel",
-        "ok": true
+        "predicted": "similar_exists",
+        "ok": false
       },
       {
         "kind": "novel",
         "expected": "needs_review",
-        "predicted": "likely_novel",
+        "predicted": "similar_exists",
         "ok": false
       },
       {
         "kind": "similar",
         "expected": "similar_exists",
-        "predicted": "likely_novel",
-        "ok": false
+        "predicted": "similar_exists",
+        "ok": true
       },
       {
         "kind": "similar",
         "expected": "similar_exists",
-        "predicted": "likely_novel",
-        "ok": false
+        "predicted": "similar_exists",
+        "ok": true
       }
     ]
   },
@@ -157,15 +157,131 @@
     }
   },
   "tool_selection": {
-    "accuracy": 1.0,
+    "accuracy": 0.4524,
     "n_tasks": 42,
     "per_tool_accuracy": {
-      "library_search": 1.0,
-      "library_paper": 1.0,
-      "library_find": 1.0
+      "library_search": 0.75,
+      "library_paper": 0.2941,
+      "library_find": 0.3846
     },
-    "confusion_count": 0,
-    "confusions": [],
+    "confusion_count": 23,
+    "confusions": [
+      {
+        "expected": "library_search",
+        "predicted": "library_paper",
+        "prompt": "Import these papers from arXiv into the library, then summarise."
+      },
+      {
+        "expected": "library_search",
+        "predicted": "library_paper",
+        "prompt": "Add a paper to my library with auto-enrich from Semantic Scholar."
+      },
+      {
+        "expected": "library_search",
+        "predicted": "library_paper",
+        "prompt": "Bring in the recent RAG papers and extract structured metadata."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Generate a structured extraction schema for 2309.01234."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_find",
+        "prompt": "Propose three novel ideas grounded in 2401.00001."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Remove paper 2211.12792 from the library."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Verify the novelty of idea 42 against arXiv."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_find",
+        "prompt": "Approve idea 17 as a research direction."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_find",
+        "prompt": "Reject idea 9 \u2014 too generic."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Pull the abstract-extracted schema for 2406.00007."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Did we already extract the metadata for 2405.00005?"
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_find",
+        "prompt": "Mark idea 17 as approved."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Re-extract the bibliographic schema for 2401.00001."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_find",
+        "prompt": "Generate five methodological ideas about 2401.00001."
+      },
+      {
+        "expected": "library_paper",
+        "predicted": "library_search",
+        "prompt": "Delete paper 2401.00001."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_search",
+        "prompt": "Find papers in my library that mention hallucination detection."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_search",
+        "prompt": "What about papers in my library about attention \u2014 top 5?"
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_search",
+        "prompt": "List the first ten arXiv cs.LG papers I imported."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_search",
+        "prompt": "Find papers in my library with min 100 citations about scaling."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_search",
+        "prompt": "Show me only search actions from the activity log."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_paper",
+        "prompt": "Pull library papers ranked by published date."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_paper",
+        "prompt": "Find similar papers to my 2401.00001 inside my library."
+      },
+      {
+        "expected": "library_find",
+        "predicted": "library_paper",
+        "prompt": "List my library papers by category cs.CL."
+      }
+    ],
     "surface_old": {
       "tool_count": 10,
       "arg_count": 32,

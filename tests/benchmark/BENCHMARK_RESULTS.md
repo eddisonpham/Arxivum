@@ -6,8 +6,8 @@ oracles; `--real` swaps in the local LLM as both summariser and judge.
 Each row maps to a row in §6 of `docs/AI_RESEARCHER_CRITIQUE.md`.
 
 Python: 3.13.12  Platform: Windows-11-10.0.26200-SP0
-Embedder: stub (hash-based deterministic, stub)
-LLM judge: stub
+Embedder: stub (hash-based deterministic, BGE-small)
+LLM judge: LocalLLM
 
 ## Headline table
 
@@ -19,12 +19,12 @@ LLM judge: stub
 | Query: Recall@5 (mean) | 0.750 | ≥ 0.500 | ✅ |
 | Summarize: section completeness (all 7 non-empty) | 100.00% | ≥ 0.95 | ✅ |
 | Summarize: ROUGE-L (overall vs abstract) | 0.052 | ≥ 0.250 | ❌ |
-| Summarize: coverage judge mean (1-5) | 3.00 | ≥ 3.50 | ❌ |
+| Summarize: coverage judge mean (1-5) | 2.71 | ≥ 3.50 | ❌ |
 | Ideas: count returned (mean) | 3.0 | ≥ 2.5 | ✅ |
 | Ideas: plausibility judge mean (1-5) | 3.00 | ≥ 3.00 | ✅ |
-| Novelty: accuracy vs ground truth | 25.00% | ≥ 70% | ❌ |
+| Novelty: accuracy vs ground truth | 50.00% | ≥ 70% | ❌ |
 | Extraction: schema coverage (8-field canonical) | 100.00% | ≥ 0.80 | ✅ |
-| Tool selection: stub-router accuracy on synthetic-task set | 100.00% (42 tasks) | ≥ 0.85 | ✅ |
+| Tool selection: stub-router accuracy on synthetic-task set | 45.24% (42 tasks) | ≥ 0.85 | ❌ |
 | Tool count (was 9, target 3) | 3 | ≤ 3 | ✅ |
 | Tool arg count reduction (was 32, target ≤ 27) | 26 | ≤ 27 | ✅ |
 
@@ -33,7 +33,7 @@ LLM judge: stub
 | Query | Top-K returned | Gold | NDCG@5 | P@5 |
 |---|---|---|---|---|
 | are mixture of experts models scalable? | 2406.00007, 2309.01234, 2402.00010, 2405.00005, 2401.00001 | 2401.00001 | 0.387 | 0.200 |
-| detect hallucinations in generated summaries | 2404.01000, 2406.00007, 2309.01234, 2401.00001, 2405.00005 | 2405.00005, 2309.01234 | 0.473 | 0.400 |
+| detect hallucinations in generated summaries | 2404.01000, 2406.00007, 2309.01234, 2401.00001, 2405.00005 | 2309.01234, 2405.00005 | 0.473 | 0.400 |
 | attention for long context inputs | 2309.01234, 2405.00005, 2404.01000, 2401.00001, 2402.00010 | 2406.00007 | 0.000 | 0.000 |
 | combine citation graph features with embeddings for paper retrieval | 2309.01234, 2404.01000, 2401.00001, 2405.00005, 2406.00007 | 2309.01234, 2404.01000 | 0.710 | 0.400 |
 
@@ -41,10 +41,10 @@ LLM judge: stub
 
 | Kind | Expected | Predicted | OK |
 |---|---|---|---|
-| novel | likely_novel | likely_novel | ✅ |
-| novel | needs_review | likely_novel | ❌ |
-| similar | similar_exists | likely_novel | ❌ |
-| similar | similar_exists | likely_novel | ❌ |
+| novel | likely_novel | similar_exists | ❌ |
+| novel | needs_review | similar_exists | ❌ |
+| similar | similar_exists | similar_exists | ✅ |
+| similar | similar_exists | similar_exists | ✅ |
 
 ## Extraction schema coverage (per paper, 8-field schema)
 
@@ -68,6 +68,7 @@ LLM judge: stub
 python -m tests.benchmark.run_all                 # mocked mode (default)
 python -m tests.benchmark.run_all --real          # real local LLM as judge
 python -m tests.benchmark.run_all --no-bb        # skip live-API benches
+python -m tests.benchmark.run_all --real-embedder  # probe real embedder fallback chain
 ```
 
 Mocked mode uses deterministic hash-based pseudo-embeddings for
@@ -75,4 +76,5 @@ retrieval and a stub LLM that returns canned 7-section summary
 JSON. The stub embeds the oracle outputs so the metric plumbing is
 exercised end-to-end; only the *quality* of the LLM is mocked.
 Re-run with `--real` to substitute the local LLM as both the
-summariser and the judge.
+summariser and the judge. `--real-embedder` adds the SPECTER2 /
+BGE-large / BGE-small availability probe to the report.
