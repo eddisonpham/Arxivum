@@ -115,15 +115,27 @@ def novelty_messages(
     candidate_title: str,
     candidate_abstract: str,
 ) -> list[dict]:
-    """Build chat messages for novelty comparison."""
+    """Build chat messages for novelty comparison.
+
+    Asks for an explicit, calibrated ``confidence`` (0.0 .. 1.0) so
+    that low-confidence binary verdicts can be downgraded to
+    ``needs_review`` by the service layer. See
+    :data:`src.services.novelty.LOW_CONFIDENCE_THRESHOLD`.
+    """
     return [
         {
             "role": "system",
             "content": (
                 "You are a research novelty assessor. Compare a proposed "
                 "research idea with a candidate paper and determine whether "
-                "the candidate already addresses the idea. Output ONLY valid "
-                "JSON."
+                "the candidate already addresses the idea. "
+                "Output ONLY valid JSON. "
+                "After your verdict, also output a JSON field 'confidence' "
+                "(0.0..1.0) that reflects how strongly the candidate paper's "
+                "abstract overlaps with the proposed idea. Be calibrated: "
+                "0.9+ only when the candidate is unambiguously equivalent; "
+                "0.5-0.7 when overlap is partial; <0.4 when the abstracts "
+                "merely share vocabulary."
             ),
         },
         {
@@ -134,6 +146,7 @@ def novelty_messages(
                 f"Candidate paper abstract: {candidate_abstract}\n\n"
                 f'Output a JSON object with keys:\n'
                 f'  "verdict": "likely_novel" | "needs_review" | "similar_exists",\n'
+                f'  "confidence": <float 0.0..1.0>,\n'
                 f'  "reason": "short explanation"\n\n'
                 f"Output the JSON object only:"
             ),

@@ -9,9 +9,11 @@ from src.inference.llm import StubLLM
 class TestNoveltyVerification:
     def test_verify_novelty_likely_novel(self, app_context):
         """With no similar papers in library or arXiv, verdict should be likely_novel."""
-        # Use a custom LLM that says everything is novel
+        # Use a custom LLM that says everything is novel, with high confidence
+        # so the threshold downgrade does not apply.
         custom_llm = StubLLM(responder=lambda msgs: json.dumps({
-            "verdict": "likely_novel", "reason": "No similar work found."
+            "verdict": "likely_novel", "confidence": 0.95,
+            "reason": "No similar work found."
         }))
         app_context.models.set_llm(custom_llm)
 
@@ -26,14 +28,15 @@ class TestNoveltyVerification:
         ideas = app_context.ideas.generate_ideas(arxiv_id, num_ideas=1)
         idea_id = ideas[0]["id"]
         result = app_context.novelty.verify_novelty(idea_id)
-        assert result["verdict"] in ("likely_novel", "needs_review")
+        assert result["verdict"] == "likely_novel"
         assert "notes" in result
         assert "similar_arxiv_ids" in result
 
     def test_verify_novelty_similar_exists(self, app_context):
         """When arXiv returns a similar paper and LLM says similar_exists."""
         custom_llm = StubLLM(responder=lambda msgs: json.dumps({
-            "verdict": "similar_exists", "reason": "This paper already addresses the idea."
+            "verdict": "similar_exists", "confidence": 0.95,
+            "reason": "This paper already addresses the idea."
         }))
         app_context.models.set_llm(custom_llm)
 
@@ -56,6 +59,9 @@ class TestNoveltyVerification:
         result = app_context.novelty.verify_novelty(idea_id)
         assert result["verdict"] == "similar_exists"
         assert "9999.99999" in result["similar_arxiv_ids"]
+
+
+
 
     def test_verify_novelty_logs_activity(self, app_context):
         app_context.library.search_and_import("test", max_results=1)

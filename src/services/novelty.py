@@ -25,6 +25,20 @@ from src.utils import track_activity
 logger = logging.getLogger(__name__)
 
 LOCAL_SIMILARITY_THRESHOLD = 0.85
+LOW_CONFIDENCE_THRESHOLD = 0.6
+_VALID_VERDICTS = ("likely_novel", "needs_review", "similar_exists")
+
+
+def _clamp_confidence(raw: float | int | None) -> float:
+    """Clamp confidence to [0.0, 1.0]; default 0.5 on missing/invalid."""
+    if raw is None:
+        return 0.5
+    try:
+        c = float(raw)
+    except (TypeError, ValueError):
+        return 0.5
+    return max(0.0, min(1.0, c))
+
 
 class NoveltyService:
     """Verify the novelty of a generated research idea."""
@@ -90,19 +104,38 @@ class NoveltyService:
             if external_candidates:
                 for cand in external_candidates:
                     similar_ids.append(cand["arxiv_id"])
-                    llm_verdict = self._llm_judge(
+                    llm_verdict, llm_confidence = self._llm_judge(
                         idea.idea_text, cand["title"], cand["abstract"],
                     )
                     if llm_verdict == "similar_exists":
-                        verdict = "similar_exists"
-                        notes_parts.append(
-                            f"LLM found similar existing work: {cand['title'][:80]}"
-                        )
-                        break
+                        if llm_confidence >= LOW_CONFIDENCE_THRESHOLD:
+                            verdict = "similar_exists"
+                            notes_parts.append(
+                                f"LLM found similar existing work "
+                                f"(conf {llm_confidence:.2f}): "
+                                f"{cand['title'][:80]}"
+                            )
+                            break
+                        else:
+                            notes_parts.append(
+                                f"LLM weak-similar (conf {llm_confidence:.2f}) "
+                                f"-> downgraded: {cand['title'][:80]}"
+                            )
+                            if verdict != "similar_exists":
+                                verdict = "needs_review"
                     elif llm_verdict == "needs_review" and verdict != "similar_exists":
                         verdict = "needs_review"
                         notes_parts.append(
-                            f"LLM flagged possible overlap: {cand['title'][:80]}"
+                            f"LLM flagged possible overlap "
+                            f"(conf {llm_confidence:.2f}): "
+                            f"{cand['title'][:80]}"
+                        )
+                    elif llm_verdict == "likely_novel" and llm_confidence < LOW_CONFIDENCE_THRESHOLD:
+                        if verdict != "similar_exists":
+                            verdict = "needs_review"
+                        notes_parts.append(
+                            f"LLM weak-novel (conf {llm_confidence:.2f}): "
+                            f"{cand['title'][:80]}"
                         )
 
             if not similar_ids and verdict == "likely_novel":
@@ -110,11 +143,16 @@ class NoveltyService:
 
             unique_similar = list(dict.fromkeys(similar_ids))
             notes = " ".join(notes_parts) if notes_parts else "No notes."
+            max_confidence = (
+                max((c for c in (locals().get("llm_confidence"),) if c is not None),
+                    default=0.5)
+            )
             check_id = self.db.add_novelty_check(NoveltyCheckRow(
                 id=None, idea_id=idea_id,
                 query_terms=query_terms,
                 similar_arxiv_ids=unique_similar,
                 verdict=verdict, notes=notes,
+                confidence=max_confidence,
             ))
 
             return {
@@ -124,6 +162,7 @@ class NoveltyService:
                 "notes": notes,
                 "similar_arxiv_ids": unique_similar,
                 "query_terms": query_terms,
+                "confidence": max_confidence,
             }
 
     def _local_check(
@@ -178,8 +217,15 @@ class NoveltyService:
 
     def _llm_judge(
         self, idea_text: str, cand_title: str, cand_abstract: str
-    ) -> str:
-        """Ask the LLM to compare the idea with a candidate paper."""
+    ) -> tuple[str, float]:
+        """Ask the LLM to compare the idea with a candidate paper.
+
+        Returns ``(verdict, confidence)``. The verdict is one of the
+        three strings ``likely_novel``, ``needs_review``,
+        ``similar_exists``; confidence is in [0.0, 1.0]. On parse
+        failure we fall back to ``('needs_review', 0.0)`` so the
+        downstream threshold logic has a defined input.
+        """
         messages = novelty_messages(idea_text, cand_title, cand_abstract)
         try:
             raw = self.models.llm.chat(
@@ -188,8 +234,9 @@ class NoveltyService:
             parsed = extract_json(raw)
             if isinstance(parsed, dict):
                 v = parsed.get("verdict", "needs_review")
-                if v in ("likely_novel", "needs_review", "similar_exists"):
-                    return v
+                c = _clamp_confidence(parsed.get("confidence"))
+                if v in _VALID_VERDICTS:
+                    return v, c
         except Exception as exc:
             logger.warning("LLM novelty judgment failed: %s", exc)
-        return "needs_review"
+        return "needs_review", 0.0

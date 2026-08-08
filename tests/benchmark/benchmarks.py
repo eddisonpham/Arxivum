@@ -165,7 +165,8 @@ class ContextStubLLM:
         sys_text = " ".join(m.get("content", "") for m in messages if m["role"] == "system").lower()
         all_low = (text + " " + sys_text).lower()
         if "novelty assessor" in sys_text or "core claim" in all_low:
-            return '{"verdict": "likely_novel", "reason": "stub judge"}'
+            return ('{"verdict": "likely_novel", "confidence": 0.5, '
+                    '"reason": "stub judge"}')
         if "research analyst" in sys_text:
             return _constraint_stub
         if "creative research scientist" in sys_text:
@@ -264,9 +265,20 @@ class _NoveltyStubLLM_OLD:  # compatibility shim removed
     model_path = "stub-novelty-old"
 
 
+LOW_CONFIDENCE_FOR_BENCH = 0.6
+
+
 def bench_novelty(env) -> dict:
-    """Compare predicted verdict vs ground truth label on NOVELTY_PAIRS."""
+    """Compare predicted verdict vs ground truth label on NOVELTY_PAIRS.
+
+    Reports two accuracies:
+      - accuracy: raw LLM verdicts vs ground truth.
+      - accuracy_after_threshold: low-confidence (< LOW_CONFIDENCE_FOR_BENCH)
+        binary verdicts are downgraded to 'needs_review'. This is the
+        IMPROVEMENT_PLAN Tier-1.2 acceptance metric.
+    """
     correct = 0
+    correct_th = 0
     total = 0
     per_pair = []
     for p in NOVELTY_PAIRS:
@@ -277,19 +289,33 @@ def bench_novelty(env) -> dict:
             env.ctx.models.llm, kind="verdict",
         )
         pred = judge["verdict"] or "needs_review"
+        confidence = judge.get("confidence") or 0.0
+        pred_th = pred
+        if confidence < LOW_CONFIDENCE_FOR_BENCH and pred in (
+            "likely_novel", "similar_exists",
+        ):
+            pred_th = "needs_review"
         ok = (pred == p["expected_verdict"])
+        ok_th = (pred_th == p["expected_verdict"])
         total += 1
         if ok:
             correct += 1
+        if ok_th:
+            correct_th += 1
         per_pair.append({
             "kind": p["kind"],
             "expected": p["expected_verdict"],
             "predicted": pred,
+            "predicted_thresholded": pred_th,
+            "confidence": confidence,
             "ok": ok,
+            "ok_thresholded": ok_th,
         })
     return {
         "summary": {
             "accuracy": round(correct / total, 4) if total else 0.0,
+            "accuracy_after_threshold": round(correct_th / total, 4) if total else 0.0,
+            "low_confidence_threshold": LOW_CONFIDENCE_FOR_BENCH,
             "n_pairs": total,
         },
         "per_pair": per_pair,

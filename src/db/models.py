@@ -12,12 +12,15 @@ an ephemeral in-memory database.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator, Sequence
+
+logger = logging.getLogger(__name__)
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS papers (
@@ -76,6 +79,7 @@ CREATE TABLE IF NOT EXISTS novelty_checks (
     similar_arxiv_ids TEXT,                -- JSON array
     verdict           TEXT NOT NULL,       -- likely_novel|needs_review|similar_exists
     notes             TEXT,
+    confidence        REAL NOT NULL DEFAULT 0.5,
     created_at        TEXT NOT NULL
 );
 
@@ -153,6 +157,7 @@ class NoveltyCheckRow:
     similar_arxiv_ids: list[str] = field(default_factory=list)
     verdict: str = ""
     notes: str | None = None
+    confidence: float = 0.5
     created_at: str = ""
 
 @dataclass
@@ -184,6 +189,23 @@ class Database:
         self._conn.execute("PRAGMA foreign_keys=ON;")
         self._conn.executescript(SCHEMA_SQL)
         self._conn.commit()
+        self._migrate_add_confidence_column()
+
+    def _migrate_add_confidence_column(self) -> None:
+        """Idempotent column add for existing on-disk databases."""
+        try:
+            cols = {r[1] for r in self.conn.execute(
+                "PRAGMA table_info(novelty_checks)").fetchall()}
+        except sqlite3.OperationalError:
+            return
+        if "confidence" not in cols:
+            try:
+                self.conn.execute(
+                    "ALTER TABLE novelty_checks "
+                    "ADD COLUMN confidence REAL NOT NULL DEFAULT 0.5")
+                self.conn.commit()
+            except sqlite3.OperationalError as exc:
+                logger.debug("confidence migration skipped: %s", exc)
 
     @property
     def conn(self) -> sqlite3.Connection:
@@ -445,14 +467,14 @@ class Database:
             cur = conn.execute(
                 """
                 INSERT INTO novelty_checks (idea_id, query_terms, similar_arxiv_ids,
-                    verdict, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                    verdict, notes, confidence, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     n.idea_id,
                     json.dumps(n.query_terms) if n.query_terms else None,
                     json.dumps(n.similar_arxiv_ids) if n.similar_arxiv_ids else None,
-                    n.verdict, n.notes, n.created_at,
+                    n.verdict, n.notes, n.confidence, n.created_at,
                 ),
             )
             return int(cur.lastrowid)
@@ -467,7 +489,9 @@ class Database:
                 id=r["id"], idea_id=r["idea_id"],
                 query_terms=json.loads(r["query_terms"]) if r["query_terms"] else [],
                 similar_arxiv_ids=json.loads(r["similar_arxiv_ids"]) if r["similar_arxiv_ids"] else [],
-                verdict=r["verdict"], notes=r["notes"], created_at=r["created_at"],
+                verdict=r["verdict"], notes=r["notes"],
+                confidence=r["confidence"] if "confidence" in r.keys() else 0.5,
+                created_at=r["created_at"],
             )
             for r in rows
         ]

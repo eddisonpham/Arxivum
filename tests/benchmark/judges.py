@@ -147,7 +147,11 @@ JUDGE_NOVELTY_FOCUS = (
     "as 'similar_exists' if C substantially addresses B, "
     "'needs_review' if there is partial overlap worth manual check, "
     "or 'likely_novel' if C does not address B. Be conservative: any "
-    "significant overlap on the *core claim* of B is similar_exists."
+    "significant overlap on the *core claim* of B is similar_exists. "
+    "After your verdict, also output a JSON field 'confidence' "
+    "(0.0..1.0). Be calibrated: 0.9+ only when C is unambiguously "
+    "equivalent to B; 0.5-0.7 when overlap is partial; <0.4 when "
+    "the abstracts merely share vocabulary."
 )
 
 
@@ -160,6 +164,7 @@ def judge_novelty(source_a: str, source_b: str, source_c: str, query: str = "") 
         f"Rubric:\n{JUDGE_NOVELTY_FOCUS}\n\n"
         "Output a JSON object with keys: "
         '{"verdict": "similar_exists"|"needs_review"|"likely_novel", '
+        '"confidence": <float 0.0..1.0>, '
         '"reason": "<one short sentence>"}.\n\n'
         "---\n\n"
         f"A (source paper):\n{source_a[:1500]}\n\n"
@@ -168,7 +173,8 @@ def judge_novelty(source_a: str, source_b: str, source_c: str, query: str = "") 
         "Reason step by step:\n"
         "  1. What is the *core claim* of B?\n"
         "  2. Does C already address that core claim?\n"
-        "  3. Pick one verdict from the rubric.\n"
+        "  3. Pick one verdict from the rubric and a calibration-aware "
+        "confidence float.\n"
         "Output the JSON only."
     )
     return [
@@ -181,8 +187,19 @@ def judge_novelty(source_a: str, source_b: str, source_c: str, query: str = "") 
 
 _SCORE_RE = re.compile(r"\"score\"\s*:\s*(\d+)")
 _VERDICT_RE = re.compile(r"\"verdict\"\s*:\s*\"(likely_novel|needs_review|similar_exists)\"")
+_CONFIDENCE_RE = re.compile(r"\"confidence\"\s*:\s*([0-9]*\.?[0-9]+)")
 _RATIONALE_RE = re.compile(r"\"rationale\"\s*:\s*\"([^\"]{0,500})\"")
 _REASON_RE = re.compile(r"\"reason\"\s*:\s*\"([^\"]{0,500})\"")
+
+
+def _clamp_confidence(raw: float | int | None) -> float | None:
+    if raw is None:
+        return None
+    try:
+        c = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, min(1.0, c))
 
 
 def parse_score_judge(raw: str, scale_min: int = 1, scale_max: int = 5) -> dict:
@@ -197,11 +214,23 @@ def parse_score_judge(raw: str, scale_min: int = 1, scale_max: int = 5) -> dict:
 
 
 def parse_verdict_judge(raw: str) -> dict:
-    """Parse a novelty verdict output."""
+    """Parse a novelty verdict output.
+
+    Returns ``verdict``, ``confidence``, ``reason``. ``confidence`` is
+    the float in [0.0, 1.0] emitted by the LLM (or ``None`` if the
+    LLM chose not to report one).
+    """
     m_v = _VERDICT_RE.search(raw)
     if not m_v:
-        return {"verdict": None, "reason": "PARSE_FAILED", "raw": raw[:200]}
-    return {"verdict": m_v.group(1), "reason": _REASON_RE.search(raw).group(1) if _REASON_RE.search(raw) else ""}
+        return {"verdict": None, "confidence": None, "reason": "PARSE_FAILED",
+                "raw": raw[:200]}
+    m_c = _CONFIDENCE_RE.search(raw)
+    return {
+        "verdict": m_v.group(1),
+        "confidence": _clamp_confidence(m_c.group(1) if m_c else None),
+        "reason": _REASON_RE.search(raw).group(1) if _REASON_RE.search(raw) else "",
+        "raw": raw[:200],
+    }
 
 
 # ── A trivial stub judge (deterministic, offline) ────────────────────────
@@ -223,7 +252,8 @@ class StubJudge:
     def chat(self, messages: list[dict], temperature: float = 0.0, max_tokens: int = 256, **_kw) -> str:
         user = " ".join(m.get("content", "") for m in messages if m["role"] == "user")
         if "verdict" in user and "core claim" in user:
-            return '{"verdict": "likely_novel", "reason": "stub judge"}'
+            return ('{"verdict": "likely_novel", "confidence": 0.5, '
+                    '"reason": "stub judge"}')
         return '{"score": 3, "rationale": "stub judge"}'
 
 

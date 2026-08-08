@@ -80,6 +80,13 @@ def _render_markdown(results: dict, env_meta: dict, hosts: dict) -> str:
     crit_metrics.append(("Novelty: accuracy vs ground truth",
                          f"{n['accuracy']:.2%}", "≥ 70%",
                          "✅" if n["accuracy"] >= 0.7 else "❌"))
+    if "accuracy_after_threshold" in n:
+        crit_metrics.append((
+            "Novelty: accuracy after confidence threshold (>=" \
+            f"{n['low_confidence_threshold']:.1f})",
+            f"{n['accuracy_after_threshold']:.2%}", "≥ 70%",
+            "✅" if n["accuracy_after_threshold"] >= 0.7 else "❌",
+        ))
 
     e = results["extraction"]["summary"]
     crit_metrics.append(("Extraction: schema coverage (8-field canonical)",
