@@ -9,12 +9,28 @@ from src.inference.llm import StubLLM
 class TestNoveltyVerification:
     def test_verify_novelty_likely_novel(self, app_context):
         """With no similar papers in library or arXiv, verdict should be likely_novel."""
-        # Use a custom LLM that says everything is novel, with high confidence
-        # so the threshold downgrade does not apply.
-        custom_llm = StubLLM(responder=lambda msgs: json.dumps({
-            "verdict": "likely_novel", "confidence": 0.95,
-            "reason": "No similar work found."
-        }))
+        # Use a custom LLM that returns the right shape per prompt type.
+        def _respond(msgs):
+            content = " ".join(m.get("content", "") for m in msgs)
+            if "JSON array" in content and "ideas" in content:
+                return json.dumps([{
+                    "title": "Invert the attention pattern",
+                    "summary": "Substitute the softmax attention with a contrary rule.",
+                    "extension": "Inverts the prior assumption.",
+                    "next_steps": ["ablate softmax"],
+                    "search_queries": ["contrary attention"],
+                }])
+            if "novelty assessor" in content or "core claim" in content:
+                return json.dumps({
+                    "verdict": "likely_novel", "confidence": 0.95,
+                    "reason": "No similar work found.",
+                })
+            # Constraints request falls through to a sensible default.
+            return ("{\"assumptions\":[\"data is iid\"],"
+                    "\"inductive_biases\":[\"softmax normalization\"],"
+                    "\"limitations\":[\"single corpus\"],"
+                    "\"domain\":\"NLP\",\"key_method\":\"attention\"}")
+        custom_llm = StubLLM(responder=_respond)
         app_context.models.set_llm(custom_llm)
 
         # Import a paper, generate an idea, verify novelty
@@ -34,10 +50,21 @@ class TestNoveltyVerification:
 
     def test_verify_novelty_similar_exists(self, app_context):
         """When arXiv returns a similar paper and LLM says similar_exists."""
-        custom_llm = StubLLM(responder=lambda msgs: json.dumps({
-            "verdict": "similar_exists", "confidence": 0.95,
-            "reason": "This paper already addresses the idea."
-        }))
+        def _respond(msgs):
+            content = " ".join(m.get("content", "") for m in msgs)
+            if "JSON array" in content and "ideas" in content:
+                return json.dumps([{
+                    "title": "Invert the attention pattern",
+                    "summary": "Substitute the softmax attention with a contrary rule.",
+                    "extension": "Inverts the prior assumption.",
+                    "next_steps": ["ablate softmax"],
+                    "search_queries": ["contrary attention"],
+                }])
+            return json.dumps({
+                "verdict": "similar_exists", "confidence": 0.95,
+                "reason": "This paper already addresses the idea.",
+            })
+        custom_llm = StubLLM(responder=_respond)
         app_context.models.set_llm(custom_llm)
 
         app_context.library.search_and_import("test", max_results=1)

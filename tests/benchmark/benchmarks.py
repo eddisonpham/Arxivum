@@ -121,21 +121,21 @@ _constraint_stub = (
 )
 
 _ideas_stub = (
-    '[{"title": "Distillation of shared-routing MoE", '
-    '"summary": "Train a small dense student to imitate a sparse MoE teacher.", '
-    '"extension": "Inverts the anti-collapse bias toward compression.", '
-    '"next_steps": ["measure inference FLOPs", "compare to baseline dense"], '
-    '"search_queries": ["moe distillation", "sparse expert compression"]}, '
+    '[{"title": "Invert the routing entropy regulariser", '
+    '"summary": "Replace the anti-collapse loss with a contrary objective.", '
+    '"extension": "Substitutes the loss with the inverse of the current one.", '
+    '"next_steps": ["ablate at 100k tokens", "compare to baseline dense"], '
+    '"search_queries": ["moe distillation inverse", "contrary expert compression"]}, '
     '{"title": "Citation-graph features for MoE expert selection", '
     '"summary": "Use paper-citation coupling as a prior on expert routing.", '
     '"extension": "Adds an external signal the original method does not use.", '
     '"next_steps": ["build a citation graph for cs.LG 2024"], '
-    '"search_queries": ["citation graph expert", "scientific knowledge routing"]}, '
+    '"search_queries": ["citation graph expert", "substitute scientific knowledge routing"]}, '
     '{"title": "Linear kernel attention for long-context MoE routing", '
     '"summary": "Extend router attention to 1M tokens with linear kernel attention.", '
-    '"extension": "Combines two sparse-computation motifs.", '
+    '"extension": "Hard-negative mining instead of dense routing.", '
     '"next_steps": ["ablate at 100k tokens", "compare with H100 wall-time"], '
-    '"search_queries": ["linear attention moe", "long-context routing"]}]'
+    '"search_queries": ["linear attention moe", "long-context routing negation"]}]'
 )
 
 _extraction_stub = (

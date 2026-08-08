@@ -47,11 +47,11 @@ class TestIdeaGeneration:
         """Test with a custom LLM responder that returns specific ideas."""
         custom_llm = StubLLM(responder=lambda msgs: json.dumps([
             {
-                "title": "Novel approach A",
-                "summary": "Use method A to solve X",
-                "extension": "Extends by using A",
+                "title": "Invert approach A",
+                "summary": "Substitute method A with its contrary.",
+                "extension": "Inverts the original recipe.",
                 "next_steps": ["step1", "step2"],
-                "search_queries": ["method A for X", "novel approach A"],
+                "search_queries": ["contrary method A", "inverse approach A"],
             }
         ]))
         app_context.models.set_llm(custom_llm)
@@ -61,8 +61,11 @@ class TestIdeaGeneration:
         arxiv_id = papers[0].arxiv_id
         result = app_context.ideas.generate_ideas(arxiv_id, num_ideas=1)
         assert len(result) == 1
-        assert result[0]["title"] == "Novel approach A"
-        assert result[0]["search_queries"] == ["method A for X", "novel approach A"]
+        assert result[0]["title"] == "Invert approach A"
+        assert result[0]["search_queries"] == ["contrary method A", "inverse approach A"]
+
+
+
 
     def test_update_status(self, app_context):
         app_context.library.search_and_import("test", max_results=1)

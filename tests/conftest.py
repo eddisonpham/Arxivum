@@ -140,25 +140,25 @@ def stub_llm():
     })
     ideas_json = json.dumps([
         {
-            "title": "Idea 1",
-            "summary": "A novel approach using method A.",
-            "extension": "Extends the paper by applying A.",
+            "title": "Invert method A",
+            "summary": "Apply method A in the inverse direction.",
+            "extension": "Substitutes the original recipe with the contrary one.",
             "next_steps": ["step1", "step2"],
-            "search_queries": ["method A novel", "approach A new"],
+            "search_queries": ["method A inverse", "contrary approach A"],
         },
         {
-            "title": "Idea 2",
-            "summary": "An alternative using method B.",
-            "extension": "Contradicts by using B instead.",
+            "title": "Remove assumption of method B",
+            "summary": "Drop the bias term that method B introduces.",
+            "extension": "Contradicts by removing the assumption.",
             "next_steps": ["step3"],
-            "search_queries": ["method B alternative"],
+            "search_queries": ["method B without bias"],
         },
         {
-            "title": "Idea 3",
-            "summary": "A hybrid approach combining A and B.",
-            "extension": "Builds on both methods.",
+            "title": "Hard-negative sampling for A+B",
+            "summary": "Replace random sampling with hard-negative mining.",
+            "extension": "Builds on both methods with a substitute sampling rule.",
             "next_steps": ["step4", "step5"],
-            "search_queries": ["hybrid A B"],
+            "search_queries": ["hard-negative sampling hybrid"],
         },
     ])
     novelty_json = json.dumps({

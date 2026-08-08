@@ -80,15 +80,26 @@ def idea_messages(
     num_ideas: int,
     focus_area: str,
 ) -> list[dict]:
-    """Build chat messages for idea generation."""
+    """Build chat messages for idea generation.
+
+    Each idea must contain at least one *contrarian signal* in its
+    title / extension / next_steps / search_queries so the post-filter
+    in :mod:`src.services.ideas` can drop parroting paraphrases.
+    """
     constraints_str = json.dumps(constraints, indent=2) if constraints else "{}"
     return [
         {
             "role": "system",
             "content": (
                 "You are a creative research scientist. Given a paper, "
-                "generate novel research ideas that build on or invert its "
-                "constraints and biases. Output ONLY a valid JSON array."
+                "generate novel research ideas that EXTEND OR INVERT the "
+                "source's constraints and biases. Do NOT simply restate "
+                "the paper's findings as a future direction. Each idea "
+                "must include at least one contrarian signal in its title, "
+                "extension, next_steps, or search_queries — for example: "
+                "'invert', 'remove', 'without', 'substitute', 'contrary', "
+                "'under what precondition', 'hard-negative'. Output ONLY "
+                "a valid JSON array."
             ),
         },
         {
@@ -104,10 +115,24 @@ def idea_messages(
                 f'  "extension": "how it extends or contradicts the source",\n'
                 f'  "next_steps": ["2-3 concrete steps"],\n'
                 f'  "search_queries": ["2-3 short arXiv queries for novelty check"]\n\n'
+                f"Each idea must contain a contrarian keyword somewhere "
+                f"in (title, extension, next_steps, search_queries); "
+                f"otherwise the post-filter will drop it.\n\n"
                 f"Output the JSON array only:"
             ),
         },
     ]
+
+
+# Keywords that signal a contrarian / non-trivial extension vs the source.
+CONTRARIAN_KEYWORDS: tuple[str, ...] = (
+    "invert", "inverts", "remove", "removes", "remove the",
+    "without", "ablat", "negat", "contrary", "contra-",
+    "substit", "swap ", "swap-", "swap the", "replace",
+    "replac", "drop ", "opposite", "under what", "no ",
+    "hard-", "challenge", "precondition", "contrarian",
+    "instead of", "in place of",
+)
 
 
 def novelty_messages(
